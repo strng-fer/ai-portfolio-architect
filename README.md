@@ -12,6 +12,9 @@ Sistem berbasis AI agent (Claude Code / OpenCode / AI CLI lain) yang membantu ka
 | **Drafter-Reviewer Loop** | Draf dibuat oleh "Drafter Agent", lalu dikritisi "Reviewer Agent" (persona Staff Engineer) sebelum difinalisasi |
 | **Anti-CRUD Rule** | Ide project dilarang berupa aplikasi CRUD generik (To-Do, katalog e-commerce, kloning sosial media). Wajib menyelesaikan masalah teknis spesifik dari loker (high-concurrency booking, hybrid RAG, distributed rate-limiter, dst.) |
 | **Google XYZ Formula** | Rumus bullet CV: *"Achieved [X] as measured by [Y], by doing [Z]"* |
+| **Konseptual, Bukan Kode** | Blueprint hanya memuat ide, desain, teori, masalah, solusi, metrik, roadmap. Kode detail diserahkan ke `05_agent_prompts.md` atau `/scaffold` |
+| **Hemat Token** | Chat = status saja, dokumen berbatas kata, input via digest script. Aturan: `.claude/skills/portfolio-architect/08-token-discipline.md` |
+| **Agent Prompt Pack** | `05_agent_prompts.md` berisi P0 konteks + 1 prompt per milestone + prompt review, siap dieksekusi Cursor/Claude Code/Codex |
 
 ## Arsitektur Alur Kerja
 
@@ -43,8 +46,10 @@ documents/ (CV, LinkedIn, transkrip)
   portfolios/<perusahaan>_<posisi>/
         ├── 00_job_analysis.md
         ├── 01_project_ideation.md     (3 opsi ide)
-        ├── 02_system_blueprint.md     (arsitektur, skema DB, API, roadmap, bullet CV)
-        ├── 03_references_study.md     (≥5 repo GitHub, ≥3 paper ArXiv)
+        ├── 02_system_blueprint.md     (konsep arsitektur, data, metrik, roadmap, bullet CV)
+        ├── 03_references_study.md     (3 repo GitHub, 2 paper ArXiv)
+        ├── 04_review_report.md        (quality gate, maks 12 temuan)
+        ├── 05_agent_prompts.md        (opsional --prompts: prompt siap eksekusi)
         └── diagrams/
               ├── *.mmd                (Mermaid source)
               └── *.png                (hasil compile_diagrams.py)
@@ -56,7 +61,8 @@ documents/ (CV, LinkedIn, transkrip)
   portfolio_tracker.csv  (status: BLUEPRINT_READY)
         │
         ▼
-     /scaffold ──────────► portfolios/<slug>/starter_repo/  (boilerplate siap coding)
+   /prompt ────────────► 05_agent_prompts.md   (untuk agent lain)
+   /scaffold ──────────► starter_repo/         (opsional, boilerplate)
 ```
 
 ## Struktur Direktori
@@ -70,8 +76,8 @@ ai-portfolio-architect/
 ├── portfolio_tracker.csv              # Tracker semua blueprint yang dibuat
 ├── .claude/
 │   ├── settings.json                  # Whitelist permission Bash
-│   ├── commands/                      # 7 slash commands
-│   └── skills/portfolio-architect/    # 8 file knowledge base (SKILL + 7 modul)
+│   ├── commands/                      # 8 slash command
+│   └── skills/portfolio-architect/    # 10 file knowledge base (SKILL + 9 modul)
 ├── .agents/skills/                    # 3 CLI miner (scraper data eksternal)
 │   ├── jobspy-search/search.py        # Scraper lowongan (indeed/LinkedIn/glassdoor)
 │   ├── github-repo-miner/mine_github.py   # Cari repo referensi GitHub
@@ -79,6 +85,8 @@ ai-portfolio-architect/
 ├── tools/
 │   ├── fetch_page.py                  # Ambil isi halaman web (via Jina Reader)
 │   ├── posting_guard.py               # Filter prompt injection dari iklan lowongan
+│   ├── job_digest.py                  # Ringkasan loker hemat token (ganti baca JSON mentah)
+│   ├── ref_digest.py                  # Ringkasan repo/paper hemat token
 │   ├── compile_diagrams.py            # Render .mmd → .png (mermaid-cli / Kroki fallback)
 │   ├── compile_pdf.py                 # Gabung Markdown + render PDF (md-to-pdf)
 │   ├── verify_pdf.py                  # Validasi ukuran & keberadaan PDF
@@ -155,10 +163,11 @@ Semua interaksi lewat slash command di Claude Code / OpenCode:
 | Perintah | Fungsi |
 |---|---|
 | `/setup` | Onboarding: baca dokumen `documents/` atau wawancara 5 poin. Membuat profil kompetensi dan batasan (waktu, RAM, anggaran) |
-| `/scrape "<posisi>" "<lokasi>"` | Scraping loker → hitung Portfolio Leverage Score → tabel top 10 |
-| `/rank` | Re-purpose ranking berdasarkan rubrik `04-gap-evaluation.md` |
-| `/applyidea <URL atau ID>` | Menjalankan **Drafter-Reviewer Loop** end-to-end: analisis loker → riset GitHub/ArXiv → 3 ide project → blueprint → diagram → PDF → update tracker |
-| `/scaffold <folder_portofolio>` | Buat starter boilerplate repo (tech stack, docker, README, TODO checklist) |
+| `/scrape "<posisi>" "<lokasi>"` | Scraping loker → hitung Portfolio Leverage Score → tabel top 10 (ringkas) |
+| `/rank` | Urutkan ulang berdasarkan rubrik `04-gap-evaluation.md` |
+| `/applyidea <URL atau ID> [--prompts]` | Alur utama: analisis loker → riset GitHub/ArXiv → 3 ide → blueprint konseptual → diagram → PDF → tracker. `--prompts` ikut membuat paket prompt agent |
+| `/prompt <folder_portofolio>` | Buat/perbarui `05_agent_prompts.md`: instruksi siap eksekusi untuk agent lain |
+| `/scaffold <folder_portofolio>` | Opsional. Starter repo ringkas (struktur, docker, TODO) |
 | `/expand` | Pindai dokumen/repo baru untuk memperbarui profil kandidat |
 | `/reset` | Bersihkan cache `job_scraper/` (dengan `all` juga reset profil) |
 
@@ -169,20 +178,22 @@ Semua interaksi lewat slash command di Claude Code / OpenCode:
    → "Peran: Backend Engineer, 15 jam/minggu, RAM 16GB, minat Fintech"
 
 2. /scrape "Backend Engineer" "Jakarta"
-   → Tabel 10 loker terbaik beserta skor kecocokan, contoh:
-     ID | Perusahaan  | Posisi              | Match vs Gap | Ide                    | Skor
-     7  | Kredivo     | Backend Eng (Golang)| Go baru, SQL kuat | Distributed rate-limiter | 82
+   → Tabel 10 baris, contoh:
+     ID | Perusahaan | Posisi              | Skor | Ide
+     7  | Kredivo    | Backend Eng (Golang)| 82   | Distributed rate-limiter
 
-3. /applyidea 7
-   → Loop berjalan otomatis:
-     TAHAP 1: baca loker #7 → mine 5 repo GitHub + 3 paper ArXiv
-     TAHAP 2: draf 00-03 + diagram .mmd
-     TAHAP 3: reviewer kritik (anti-CRUD + scope check) + render PNG
-     TAHAP 4: Blueprint_Final.pdf + tracker CSV
+3. /applyidea 7 --prompts
+   → 4 fase, chat hanya status:
+     [1/4] data loker + referensi siap
+     [2/4] draf 00-03 + 05 + 2 diagram
+     [3/4] review gate lulus
+     [4/4] PDF + tracker
 
-4. /scaffold portfolios/kredivo_backend-engineer-golang
-   → started_repo/ siap dikerjakan
+4. Kerjakan dengan agent lain memakai portfolios/<slug>/05_agent_prompts.md
+   → /scaffold portfolios/<slug> hanya bila butuh starter repo
 ```
+
+> Token yang dibaca agent: `job_digest.py` (10 baris) + `ref_digest.py` (5 baris) + 3 modul skill. Bukan JSON 96 KB.
 
 ---
 
@@ -190,17 +201,21 @@ Semua interaksi lewat slash command di Claude Code / OpenCode:
 
 Setiap folder `portfolios/<perusahaan>_<posisi>/` berisi:
 
-| File | Isi Wajib |
-|---|---|
-| `00_job_analysis.md` | Bedah Responsibilities/Requirements, masalah bisnis, tabel skill vs kebutuhan |
-| `01_project_ideation.md` | 3 opsi ide: (1) Rekomendasi utama, (2) Fokus Infrastruktur, (3) Fokus AI/Data |
-| `02_system_blueprint.md` | Struktur sesuai `05-blueprint-templates.md`: masalah, arsitektur (embed PNG), tech stack, skema DB, contract API, benchmark, sprint plan, bullet CV |
-| `03_references_study.md` | ≥5 repo GitHub + ≥3 paper ArXiv + penjelasan bagian mana yang diadaptasi |
-| `diagrams/*.mmd` | Sumber Mermaid (flowchart `system_architecture`, sequenceDiagram `user_workflow`) |
-| `diagrams/*.png` | Hasil render otomatis dari `.mmd` |
-| `Blueprint_Final.md` | Dokumen gabungan (auto-generate) |
-| `Blueprint_Final.pdf` | PDF final |
-| `starter_repo/` | (jika `/scaffold` dijalankan) boilerplate kode produksi |
+| File | Isi Wajib | Batas |
+|---|---|---|
+| `00_job_analysis.md` | Bedah Responsibilities/Requirements, masalah bisnis, tabel skill vs kebutuhan | 450 kata |
+| `01_project_ideation.md` | 3 opsi ide: (1) Rekomendasi utama, (2) Fokus Infrastruktur, (3) Fokus AI/Data + non-goals | 550 kata |
+| `02_system_blueprint.md` | Struktur sesuai `05-blueprint-templates.md`: masalah, konsep arsitektur (embed PNG), tech stack, konsep data & antarmuka, teori kunci, metrik, roadmap, bullet CV. **Tanpa kode detail** | 1500 kata |
+| `03_references_study.md` | 3 repo GitHub + 2 paper ArXiv + bagian yang dipelajari (1–2 baris masing-masing) | 400 kata |
+| `04_review_report.md` | Quality gate: tabel maks 12 temuan + verdict | 350 kata |
+| `05_agent_prompts.md` | (opsional) Paket prompt agent: P0 konteks + 1 prompt per milestone + prompt review | 900 kata |
+| `diagrams/*.mmd` | Sumber Mermaid (flowchart `system_architecture`, sequenceDiagram `user_workflow`) | maks 15 node |
+| `diagrams/*.png` | Hasil render otomatis dari `.mmd` | — |
+| `Blueprint_Final.md` | Dokumen gabungan (auto-generate, termasuk 04 & 05) | — |
+| `Blueprint_Final.pdf` | PDF final | — |
+| `starter_repo/` | (jika `/scaffold` dijalankan) boilerplate ringkas | — |
+
+**Larangan isi blueprint:** blok kode > 5 baris, DDL `CREATE TABLE`, payload JSON penuh, struktur folder per-file, tutorial instalasi, nama fungsi internal. Detail eksekusi pindah ke `05_agent_prompts.md` atau `/scaffold`.
 
 ## Aturan Mermaid (Wajib untuk render PNG sukses)
 
@@ -246,6 +261,16 @@ Baris berpola berikut dibuang otomatis:
 - `you are now a ...`
 - `disregard above`
 
+### Digest Hemat Token
+
+| Script | Fungsi | Keluaran |
+|---|---|---|
+| `tools/job_digest.py list --top 10` | 1 baris per loker: id, perusahaan, posisi, lokasi, skor, stack terdeteksi | ~10 baris |
+| `tools/job_digest.py detail <id>` | Detail 1 loker, deskripsi dipotong 1800 karakter (`--full` untuk utuh) | ~15 baris |
+| `tools/ref_digest.py --repo 3 --paper 2` | Repo urut bintang + paper ArXiv | ~12 baris |
+
+Tanpa digest, agent membaca JSON mentah 20–100 KB per panggilan. Dengan digest, cukup beberapa KB.
+
 ---
 
 ## Troubleshooting
@@ -269,7 +294,7 @@ Baris berpola berikut dibuang otomatis:
 ## View Layer Detail
 
 - **Compile Diagram:** `tools/compile_diagrams.py <folder_diagrams>` — render semua `.mmd` jadi `.png` dengan prioritas: (1) `npx mermaid-cli` + puppeteer config ke Chrome/Edge yang terinstal; (2) fallback Kroki API; (3) exit 1 jika keduanya gagal.
-- **Compile PDF:** `tools/compile_pdf.py <folder_portofolio>` — gabungan `00...03 .md`, tambah `Lampiran Diagram Visual` versi blueprint belum menyisipkan gambar, lalu render ke PDF via `md-to-pdf` (env `PUPPETEER_EXECUTABLE_PATH` di-detect otomatis dari Chrome/Edge).
+- **Compile PDF:** `tools/compile_pdf.py <folder_portofolio>` — gabungan `00...05 .md`, tambah `Lampiran Diagram Visual` bila blueprint belum menyisipkan gambar, lalu render ke PDF via `md-to-pdf` (env `PUPPETEER_EXECUTABLE_PATH` di-detect otomatis dari Chrome/Edge).
 - **Verify PDF:** `tools/verify_pdf.py <pdf>` — cek file ada + ukuran ≥ 5 KB.
 
 ## Tips Praktis
@@ -279,6 +304,8 @@ Baris berpola berikut dibuang otomatis:
 - Reset profil + cache: `/reset all`.
 - Untuk perusahaan spesifik: tambahkan nama perusahaan ke query `/scrape`, misal `/scrape "Backend Kredivo" "Jakarta"`.
 - 15 jam/pekan, 2–3 minggu adalah default template batasan; ubah di `.claude/skills/portfolio-architect/02-constraints-profile.md` kapan pun.
+- Hemat token: jalankan `/applyidea <id> --prompts` sekali, lalu kerjakan milestone dengan agent lain memakai `05_agent_prompts.md`. `/scaffold` hanya bila perlu.
+- Blueprint sengaja konseptual. Bila butuh detail implementasi, minta agent lain mengeksekusi prompt pack, bukan menambah bab kode ke blueprint.
 
 ## Catatan Lisensi & Sumber
 

@@ -27,7 +27,9 @@ def main():
         "00_job_analysis.md",
         "01_project_ideation.md",
         "02_system_blueprint.md",
-        "03_references_study.md"
+        "03_references_study.md",
+        "04_review_report.md",
+        "05_agent_prompts.md",
     ]
 
     combined_parts = []

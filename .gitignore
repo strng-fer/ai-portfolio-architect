@@ -47,6 +47,9 @@ job_scraper/github_refs.json
 job_scraper/arxiv_refs.json
 job_scraper/current_job_raw.txt
 job_scraper/current_job_clean.md
+job_scraper/linkedin_fetched.json
+job_scraper/*.json
+!job_scraper/.gitkeep
 
 # Symlink/copy hasil setup_cli_links.sh (regeneratable)
 .opencode/

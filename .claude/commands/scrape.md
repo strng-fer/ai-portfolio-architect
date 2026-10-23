@@ -1,18 +1,13 @@
 ---
-description: Cari loker di portal kerja dan beri skor potensi project portofolio
+description: Cari loker dan beri skor potensi portofolio (output 10 baris, hemat token)
 ---
 
-Parameter pencarian: $ARGUMENTS
+Parameter pencarian: `$ARGUMENTS`
 
-Lakukan langkah-langkah berikut:
-1. Baca profil kandidat di `.claude/skills/portfolio-architect/01-candidate-profile.md` dan matriks evaluasi di `.claude/skills/portfolio-architect/04-gap-evaluation.md`.
-2. Jalankan script scraper:
-   `python3 .agents/skills/jobspy-search/search.py --query "$ARGUMENTS"`
-3. Baca hasil di `job_scraper/latest_scrape.json`.
-4. Evaluasi setiap lowongan dan hitung **Portfolio Leverage Score (0-100)**:
-   - Skor tertinggi diberikan pada loker yang memiliki **60-70% irisan dengan skill kandidat saat ini** dan **30-40% teknologi/arsitektur baru** yang strategis untuk dipelajari lewat satu project portofolio.
-   - Beri nilai tambah pada loker yang menuliskan masalah teknis secara spesifik di deskripsi pekerjaannya.
-5. Simpan hasil yang sudah dinilai ke `job_scraper/ranked_jobs.json`.
-6. Tampilkan tabel Markdown berisi 10 loker terbaik dengan kolom:
-   `ID | Perusahaan | Posisi | Skill Match vs Gap | Ide Singkat Portofolio | Skor`
-7. Berikan instruksi kepada user: *"Ketik `/applyidea <ID URL atau>` untuk membuat blueprint lengkap dari salah satu loker di atas."*
+1. Jalankan `python3 .agents/skills/jobspy-search/search.py --query "$ARGUMENTS" --location "<lokasi atau Indonesia>" --limit 15`.
+2. Jalankan `python3 tools/job_digest.py list --top 15`. **Jangan** membaca `latest_scrape.json` mentah.
+3. Baca hanya `.claude/skills/portfolio-architect/01-candidate-profile.md` dan `04-gap-evaluation.md`.
+4. Beri Portfolio Leverage Score (0–100) pada tiap kandidat memakai rubrik 40/30/30. Nilai dari judul + stack + deskripsi singkat, jangan membuka `detail` untuk semua loker — maksimal 3 detail untuk kandidat teratas.
+5. Tulis `job_scraper/ranked_jobs.json` (larik objek yang sama + field `score` + `ide_singkat` maks 12 kata).
+6. Tampilkan **tabel 10 baris** saja: `ID | Perusahaan | Posisi | Skor | Ide singkat`. Tanpa paragraf penjelasan.
+7. Tutup dengan 1 baris: `Lanjut: /applyidea <ID> --prompts`.

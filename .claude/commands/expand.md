@@ -1,6 +1,9 @@
 ---
-description: Perkaya profil kandidat dengan memindai dokumen baru atau repositori GitHub
+description: Perkaya profil kandidat dari dokumen baru atau GitHub (patch minimal)
 ---
 
-Periksa dokumen baru di `documents/` atau URL profil GitHub yang diberikan di `$ARGUMENTS`.
-Perbarui `.claude/skills/portfolio-architect/01-candidate-profile.md` dengan skill, pola arsitektur, dan pengalaman baru yang ditemukan tanpa menghapus data valid sebelumnya.
+Sumber baru: `$ARGUMENTS` (URL GitHub, nama file di `documents/`, atau teks bebas).
+
+1. Baca dokumen/sumber tersebut. Untuk URL GitHub, ambil ringkasan repo/README saja, bukan seluruh riwayat.
+2. Patch `.claude/skills/portfolio-architect/01-candidate-profile.md` secara aditif: tambah atau perbarui baris yang relevan. Jangan menulis ulang file, jangan menghapus data valid.
+3. Output maksimal 4 baris: apa yang ditambahkan + 1 baris next step.
