@@ -1,16 +1,44 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
 .venv/
 venv/
+ENV/
+env/
 
 # Node
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Machine-specific puppeteer config (auto-generated, berisi path lokal)
 tools/.puppeteer-config.json
+
+# Environment & Secrets
+.env
+.env.*
+*.env
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Candidate Personal Documents (mencegah kebocoran data pribadi ke remote repo)
+documents/cv/*
+!documents/cv/.gitkeep
+documents/linkedin/*
+!documents/linkedin/.gitkeep
+documents/transcripts/*
+!documents/transcripts/.gitkeep
+documents/past_projects/*
+!documents/past_projects/.gitkeep
 
 # Cache hasil scraping & analisis (regeneratable)
 job_scraper/latest_scrape.json
