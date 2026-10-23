@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 tools/*)",
+      "Bash(python3 .agents/skills/*)",
+      "Bash(npx @mermaid-js/mermaid-cli*)",
+      "Bash(npx md-to-pdf*)",
+      "Bash(mkdir*)",
+      "Bash(ls*)",
+      "Bash(cat*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)*"
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Machine-specific puppeteer config (auto-generated, berisi path lokal)
+tools/.puppeteer-config.json
+
+# Cache hasil scraping & analisis (regeneratable)
+job_scraper/latest_scrape.json
+job_scraper/ranked_jobs.json
+job_scraper/github_refs.json
+job_scraper/arxiv_refs.json
+job_scraper/current_job_raw.txt
+job_scraper/current_job_clean.md
+
+# Symlink/copy hasil setup_cli_links.sh (regeneratable)
+.opencode/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Log & temp
+*.log
+*.tmp
