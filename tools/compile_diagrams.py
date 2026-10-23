@@ -46,7 +46,7 @@ def render_with_kroki(mmd_path: Path, out_png: Path) -> bool:
             out_png.write_bytes(res.read())
         return out_png.exists() and out_png.stat().st_size > 100
     except Exception as e:
-        print(f"[!] Kroki fallback gagal untuk {mmd_path.name}: {e}")
+        print(f"[!] Kroki fallback failed for {mmd_path.name}: {e}")
         return False
 
 def main():
@@ -57,20 +57,20 @@ def main():
     diag_dir = Path(sys.argv[1])
     mmd_files = list(diag_dir.glob("*.mmd"))
     if not mmd_files:
-        print(f"[!] Tidak ada file .mmd di {diag_dir}")
+        print(f"[!] No .mmd files in {diag_dir}")
         sys.exit(1)
 
     all_ok = True
     for mmd in mmd_files:
         out_png = mmd.with_suffix(".png")
-        print(f"[*] Merender {mmd.name} -> {out_png.name}...")
+        print(f"[*] Rendering {mmd.name} -> {out_png.name}...")
         if not render_with_mmdc(mmd, out_png):
-            print("[*] Mencoba fallback render via Kroki...")
+            print("[*] Trying Kroki fallback render...")
             if not render_with_kroki(mmd, out_png):
-                print(f"[X] Gagal merender {mmd.name}. Periksa sintaks Mermaid!")
+                print(f"[X] Failed to render {mmd.name}. Check the Mermaid syntax!")
                 all_ok = False
                 continue
-        print(f"[+] Sukses membuat {out_png}")
+        print(f"[+] Created {out_png}")
 
     if not all_ok:
         sys.exit(1)

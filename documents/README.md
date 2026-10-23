@@ -1,9 +1,12 @@
-# Folder Dokumen Kandidat (`/setup`)
+# Candidate Documents Folder (`/setup`)
 
-Masukkan dokumen karier Anda ke dalam subfolder berikut sebelum menjalankan `/setup`:
-- `cv/` : File CV terbaru Anda (`.pdf`, `.md`, atau `.tex`)
-- `linkedin/` : Hasil ekspor PDF profil LinkedIn Anda
-- `transcripts/` : Transkrip nilai atau daftar mata kuliah/sertifikasi yang pernah diambil
-- `past_projects/` : File `README.md` atau penjelasan singkat dari project yang pernah Anda kerjakan
+Put your career documents in these subfolders before running `/setup`:
 
-Jika folder ini dibiarkan kosong, perintah `/setup` akan otomatis menjalankan mode wawancara interaktif di terminal.
+- `cv/` : latest CV (`.pdf`, `.md`, or `.tex`)
+- `linkedin/` : exported PDF of your LinkedIn profile
+- `transcripts/` : grade transcripts or list of courses/certifications
+- `past_projects/` : `README.md` or a short description of projects you have built
+
+If this folder is empty, `/setup` starts an interactive interview instead.
+
+Detected files are read into `.claude/skills/portfolio-architect/01-candidate-profile.md` and are never printed to chat in full.

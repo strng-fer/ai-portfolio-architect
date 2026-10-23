@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
 set -e
 
-echo "[*] Menyiapkan symlink lintas AI CLI (Claude Code, OpenCode, Aider, Gemini CLI)..."
+echo "[*] Preparing links for AI CLIs ([CC], OpenCode, Aider, Gemini CLI)..."
 
-# 1. Symlink CLAUDE.md ke AGENTS.md (Standar OpenCode & AI CLI modern)
-ln -sf CLAUDE.md AGENTS.md
+# 1. Mirror CLAUDE.md to AGENTS.md (OpenCode and modern AI CLIs read AGENTS.md).
+#    Copy is the default: it works on every filesystem, including Windows without
+#    developer mode. Symlinks confuse some Windows checkouts and CI runners.
+cp CLAUDE.md AGENTS.md
+echo "[i] AGENTS.md copied from CLAUDE.md"
 
-# 2. Symlink folder .claude/commands ke .opencode/command agar /setup, /scrape, /applyidea berjalan di OpenCode
+# 2. Mirror .claude/commands to .opencode/command so slash commands work in OpenCode.
 mkdir -p .opencode
 rm -rf .opencode/command
-ln -sf ../.claude/commands .opencode/command
+mkdir -p .opencode/command
+cp .claude/commands/*.md .opencode/command/
 
-# 3. Berikan izin eksekusi pada semua script Python
+# 3. Make every Python script executable.
 chmod +x tools/*.py .agents/skills/*/*.py
 
-echo "[+] Setup selesai! Semua command (/setup, /scrape, /applyidea, /rank, /scaffold) siap digunakan."
+# 4. Ensure the output language config exists (English by default).
+if [ ! -f .claude/config/lang.md ]; then
+  mkdir -p .claude/config
+  printf '# Output Language\n\nOutput language: English\n' > .claude/config/lang.md
+  echo "[i] Created .claude/config/lang.md (English)"
+fi
+
+echo "[+] Done. Commands ready: /setup /scrape /rank /applyidea /prompt /scaffold /lang /expand /reset"

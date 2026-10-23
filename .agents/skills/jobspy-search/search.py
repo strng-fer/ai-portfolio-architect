@@ -11,12 +11,12 @@ def scrape_with_jobspy(query: str, location: str, results: int):
         sites = [s for s in requested if s in valid_sites]
         skipped = [s for s in requested if s not in valid_sites]
         if skipped:
-            print(f"[i] Site tidak didukung versi jobspy ini (dilewati): {', '.join(skipped)}")
+            print(f"[i] Site not supported by this jobspy version (skipped): {', '.join(skipped)}")
         loc = location.lower()
         if "indonesia" in loc or "jakarta" in loc:
             sites = [s for s in sites if s != "glassdoor"]
         if not sites:
-            print("[!] Tidak ada site yang didukung versi jobspy ini.")
+            print("[!] No site supported by this jobspy version.")
             return []
         jobs = scrape_jobs(
             site_name=sites,
@@ -38,16 +38,16 @@ def scrape_with_jobspy(query: str, location: str, results: int):
             })
         return records
     except ImportError:
-        print("[!] Modul python-jobspy belum terinstal. Jalankan: pip install python-jobspy")
+        print("[!] python-jobspy is not installed. Run: pip install python-jobspy")
         return []
     except Exception as e:
-        print(f"[!] Gagal menjalankan jobspy: {e}")
+        print(f"[!] jobspy failed: {e}")
         return []
 
 def main():
     parser = argparse.ArgumentParser(description="Search job portals for portfolio ideation")
-    parser.add_argument("--query", required=True, help="Misal: 'Backend Engineer Jakarta'")
-    parser.add_argument("--location", default="Indonesia", help="Lokasi pencarian")
+    parser.add_argument("--query", required=True, help="e.g. 'Backend Engineer Jakarta'")
+    parser.add_argument("--location", default="Indonesia", help="Search location")
     parser.add_argument("--limit", type=int, default=15)
     args = parser.parse_args()
 
@@ -56,7 +56,7 @@ def main():
 
     records = scrape_with_jobspy(args.query, args.location, args.limit)
     out_file.write_text(json.dumps(records, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"[+] Tersimpan {len(records)} data loker di {out_file}")
+    print(f"[+] Saved {len(records)} job records to {out_file}")
 
 if __name__ == "__main__":
     main()

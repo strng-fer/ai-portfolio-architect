@@ -1,11 +1,13 @@
 # Job Fit & Portfolio Leverage Scoring Rubric
 
-Gunakan bobot berikut (Total 100 Poin) saat mengevaluasi loker di `/scrape` dan `/rank`:
+Use these weights (100 points total) when scoring jobs in `/scrape` and `/rank`:
 
-1. **Skill-Bridge Ratio (40 Poin)**:
-   - Skor penuh (35-40) jika kandidat sudah menguasai 50%-75% *tech stack* loker, sehingga 25%-50% sisanya dapat dipelajari melalui pembuatan project ini.
-   - Kurangi poin jika loker 100% terlalu mudah (tidak ada ilmu baru) atau 100% di luar jangkauan (butuh waktu > 6 bulan belajar dasar).
-2. **Engineering Problem Clarity (30 Poin)**:
-   - Skor tinggi jika loker menjelaskan tantangan teknis spesifik (skalabilitas, integrasi data, pipeline AI, reliabilitas).
-3. **Reusability & Market Demand (30 Poin)**:
-   - Skor tinggi jika *tech stack* dan arsitektur project yang dihasilkan dari loker ini juga relevan untuk melamar ke banyak perusahaan serupa lainnya.
+1. **Skill-Bridge Ratio (40 points)**:
+   - Full score (35-40) when the candidate already covers 50-75% of the posting's stack, so the remaining 25-50% can be learned by building this project.
+   - Deduct points when the posting is 100% too easy (nothing new to learn) or 100% out of reach (needs more than 6 months of fundamentals).
+2. **Engineering Problem Clarity (30 points)**:
+   - High score when the posting names specific technical challenges (scalability, data integration, AI pipelines, reliability).
+3. **Reusability & Market Demand (30 points)**:
+   - High score when the resulting stack and architecture also apply to many similar companies.
+
+Report the score plus a <=12-word idea per job. No narrative.

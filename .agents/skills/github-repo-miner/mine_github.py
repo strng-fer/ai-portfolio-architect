@@ -32,8 +32,8 @@ def search_github(query: str, limit: int = 8):
         return [{"error": str(e)}]
 
 def main():
-    parser = argparse.ArgumentParser(description="Cari referensi repositori di GitHub")
-    parser.add_argument("--query", required=True, help="Kata kunci teknis")
+    parser = argparse.ArgumentParser(description="Search GitHub for repository references")
+    parser.add_argument("--query", required=True, help="Technical keywords")
     parser.add_argument("--limit", type=int, default=8)
     args = parser.parse_args()
 
@@ -41,7 +41,7 @@ def main():
     out_path = Path("job_scraper/github_refs.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"[+] Berhasil menyimpan {len(results)} referensi GitHub ke {out_path}")
+    print(f"[+] Saved {len(results)} GitHub references to {out_path}")
 
 if __name__ == "__main__":
     main()

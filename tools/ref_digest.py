@@ -51,11 +51,11 @@ def main():
     repos = sorted(load("repo"), key=lambda r: r.get("stars", 0), reverse=True)
     papers = load("paper")
     if not repos and not papers:
-        print("[!] Belum ada referensi. Jalankan mine_github.py dan mine_arxiv.py dulu.", file=sys.stderr)
+        print("[!] No references yet. Run mine_github.py and mine_arxiv.py first.", file=sys.stderr)
         sys.exit(1)
 
     print(f"# repo: {len(repos)} | paper: {len(papers)}")
-    print("## GitHub (urut bintang)")
+    print("## GitHub (by stars)")
     for r in repos[: args.repo]:
         print(f"- {r.get('full_name')} | stars {r.get('stars', 0)} | {r.get('language') or '-'} | {r.get('html_url')}")
         print(f"  {short(r.get('description'), 110)}")

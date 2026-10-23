@@ -42,7 +42,7 @@ def load():
                 data = data.get("jobs", data.get("results", []))
             if data:
                 return data, path
-    print("[!] Tidak ada job_scraper/*.json. Jalankan /scrape dulu.", file=sys.stderr)
+    print("[!] No job_scraper/*.json found. Run /scrape first.", file=sys.stderr)
     sys.exit(1)
 
 
@@ -66,13 +66,13 @@ def stack(text):
 
 def cmd_list(top):
     jobs, path = load()
-    print(f"# sumber: {path.name} | total {len(jobs)} | tampil {min(top, len(jobs))}")
+    print(f"# source: {path.name} | total {len(jobs)} | showing {min(top, len(jobs))}")
     for job in jobs[:top]:
         s = score(job)
         print(
             f"{job.get('id', '-')} | {short(job.get('company'), 24)} | "
             f"{short(job.get('title'), 40)} | {short(job.get('location'), 22)} | "
-            f"skor={s if s is not None else '-'} | stack: {stack(job.get('description'))}"
+            f"score={s if s is not None else '-'} | stack: {stack(job.get('description'))}"
         )
 
 
@@ -82,18 +82,18 @@ def cmd_detail(job_id, full):
         if str(job.get("id")) == str(job_id):
             desc = job.get("description") or ""
             print(f"id: {job.get('id')}")
-            print(f"perusahaan: {job.get('company')}")
-            print(f"posisi: {job.get('title')}")
-            print(f"lokasi: {job.get('location')}")
+            print(f"company: {job.get('company')}")
+            print(f"role: {job.get('title')}")
+            print(f"location: {job.get('location')}")
             print(f"url: {job.get('job_url')}")
-            print(f"stack terdeteksi: {stack(desc)}")
-            print(f"panjang deskripsi: {len(desc)} karakter")
-            print("--- deskripsi ---")
+            print(f"detected stack: {stack(desc)}")
+            print(f"description length: {len(desc)} chars")
+            print("--- description ---")
             print(desc if full else short(desc, 1800))
             if not full and len(desc) > 1800:
-                print("--- terpotong: pakai --full bila benar-benar perlu ---")
+                print("--- truncated: use --full only if truly needed ---")
             return
-    print(f"[!] id {job_id} tidak ditemukan", file=sys.stderr)
+    print(f"[!] id {job_id} not found", file=sys.stderr)
     sys.exit(1)
 
 

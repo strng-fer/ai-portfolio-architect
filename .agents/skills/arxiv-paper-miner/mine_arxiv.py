@@ -32,8 +32,8 @@ def search_arxiv(query: str, limit: int = 5):
         return [{"error": str(e)}]
 
 def main():
-    parser = argparse.ArgumentParser(description="Cari referensi paper ilmiah di ArXiv")
-    parser.add_argument("--query", required=True, help="Kata kunci algoritma atau arsitektur")
+    parser = argparse.ArgumentParser(description="Search ArXiv for scientific paper references")
+    parser.add_argument("--query", required=True, help="Algorithm or architecture keywords")
     parser.add_argument("--limit", type=int, default=5)
     args = parser.parse_args()
 
@@ -41,7 +41,7 @@ def main():
     out_path = Path("job_scraper/arxiv_refs.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"[+] Berhasil menyimpan {len(results)} referensi ArXiv ke {out_path}")
+    print(f"[+] Saved {len(results)} ArXiv references to {out_path}")
 
 if __name__ == "__main__":
     main()

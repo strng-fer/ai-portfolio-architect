@@ -1,74 +1,74 @@
-# Agent Prompt Pack — <Nama Project>
+# Agent Prompt Pack - <Project Name>
 
-Cara pakai: tempel `P0` di awal setiap sesi baru, lalu prompt milestone secara berurutan. Satu milestone = satu sesi. Jangan lompat.
+How to use: paste `P0` at the start of every new session, then run milestone prompts in order. One milestone = one session. Do not skip.
 
-Urutan: `P0` → `P1` → `P2` → `P3` → `P4` → `P5`.
+Order: `P0` -> `P1` -> `P2` -> `P3` -> `P4` -> `P5`.
 
 ---
 
-## P0 — Context Prompt
+## P0 - Context Prompt
 
-**Goal**: Menyiapkan agent agar bekerja pada project ini tanpa perlu penjelasan ulang.
+**Goal**: Prepare the agent to work on this project with no further explanation.
 
-**Context**: `02_system_blueprint.md` bagian 2 (tujuan/non-goals), 4 (arsitektur), 5 (stack).
+**Context**: `02_system_blueprint.md` sections 2 (goals/non-goals), 4 (architecture), 5 (stack).
 
 **Task**:
-1. Baca tiga bagian blueprint tersebut.
-2. Ringkas kembali stack, batasan, dan non-goals dalam 5 baris.
-3. Tunggu prompt milestone berikutnya.
+1. Read those three blueprint sections.
+2. Restate the stack, constraints, and non-goals in 5 lines.
+3. Wait for the next milestone prompt.
 
-**Constraints**: Python 3.11, free-tier only, RAM 16GB, CPU-only inference, tanpa model besar lokal. Bahasa kode Inggris, komentar minimal.
+**Constraints**: Python 3.11, free tier only, 16 GB RAM, CPU-only inference, no large local models. Code in English, minimal comments.
 
-**Deliverable**: ringkasan konteks 5 baris di awal sesi.
+**Deliverable**: a 5-line context summary at the start of the session.
 
-**Done when**: ringkasan menyebut stack, batas kuota, dan minimal 2 non-goals.
+**Done when**: the summary names the stack, quota limits, and at least 2 non-goals.
 
-**Out of scope**: menulis fitur, mengubah blueprint.
+**Out of scope**: writing features, editing the blueprint.
 
 ---
 
-## P1 — <Milestone 1: Fondasi>
+## P1 - <Milestone 1: Foundation>
 
-**Goal**: <hasil akhir 1 kalimat>.
+**Goal**: <one-sentence end result>.
 
-**Context**: `02_system_blueprint.md` bagian 7 (data & antarmuka), 10 (workflow fase 1).
+**Context**: `02_system_blueprint.md` sections 7 (data & interfaces), 10 (workflow phase 1).
 
 **Task**:
-1. <langkah imperatif>
-2. <langkah imperatif>
-3. <langkah imperatif>
+1. <imperative step>
+2. <imperative step>
+3. <imperative step>
 
-**Constraints**: <bahasa, framework, batas waktu, larangan>.
+**Constraints**: <language, framework, time limit, prohibitions>.
 
-**Deliverable**: <file/endpoint/test yang harus ada>.
+**Deliverable**: <files/endpoints/tests that must exist>.
 
-**Done when**: <perintah verifikasi> lulus dan <metrik> tercapai.
+**Done when**: <verification command> passes and <metric> is reached.
 
-**Out of scope**: <fitur yang tidak boleh disentuh di fase ini>.
-
----
-
-## P2 — <Milestone 2>
-
-(Format sama: Goal / Context / Task / Constraints / Deliverable / Done when / Out of scope.)
+**Out of scope**: <features that must not be touched in this phase>.
 
 ---
 
-## P5 — Review & Benchmark
+## P2 - <Milestone 2>
 
-**Goal**: Membuktikan klaim performa dan menemukan regresi.
+(Same format: Goal / Context / Task / Constraints / Deliverable / Done when / Out of scope.)
 
-**Context**: `02_system_blueprint.md` bagian 9 (metrik & validasi).
+---
+
+## P5 - Review & Benchmark
+
+**Goal**: Prove the performance claims and catch regressions.
+
+**Context**: `02_system_blueprint.md` section 9 (metrics & validation).
 
 **Task**:
-1. Jalankan skenario benchmark pada baseline dan versi baru.
-2. Bandingkan hasil dengan target di blueprint.
-3. Laporkan temuan dalam tabel: Area | Masalah | Keparahan | Perbaikan.
+1. Run the benchmark scenario against baseline and the new version.
+2. Compare results with the blueprint targets.
+3. Report findings in a table: Area | Problem | Severity | Fix.
 
-**Constraints**: tanpa mengubah arsitektur saat mengukur. Ukur 3 kali, ambil median.
+**Constraints**: do not change the architecture while measuring. Measure 3 times, take the median.
 
-**Deliverable**: `benchmark_report.md` maks 1 halaman.
+**Deliverable**: `benchmark_report.md`, max 1 page.
 
-**Done when**: setiap metrik target punya angka aktual dan verdict lulus/tidak.
+**Done when**: every target metric has an actual number and a pass/fail verdict.
 
-**Out of scope**: refactor besar, fitur baru.
+**Out of scope**: large refactors, new features.

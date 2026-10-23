@@ -1,77 +1,78 @@
 # Token Discipline & Output Contract
 
-Tujuan: hasil kerja tetap bermutu, tetapi token yang dibakar minimal. Dokumen adalah produk. Chat hanya status.
+Goal: keep quality high while burning as few tokens as possible. Documents are the product. Chat is only status.
 
-## 1. Aturan Chat (berlaku untuk semua command)
+## 1. Chat rules (applies to every command)
 
-- **Dilarang** menampilkan draf, isi file, tabel panjang, atau proses berpikir di chat.
-- Satu baris status per fase. Contoh: `[1/4] Data loker + referensi siap`.
-- Output akhir maksimal **10 baris**: path PDF, path prompt pack (jika ada), 3 bullet temuan, 1 baris next step.
-- Jangan mengulang instruksi user, jangan merangkum dokumen yang baru ditulis, jangan menawarkan bantuan tambahan.
-- Jangan menyalin isi file ke chat "untuk konfirmasi". Tulis file, sebut path-nya.
-- Tanpa emoji, tanpa banner, tanpa tabel hiasan.
+- **Never** print drafts, file contents, long tables, or reasoning in chat.
+- One status line per phase. Example: `[1/4] job data + references ready`.
+- Final output max **10 lines**: PDF path, prompt pack path (or `-`), 3 bullets, 1 next step.
+- Do not restate the user's request, do not summarize the document you just wrote, do not offer extra help.
+- Never copy file contents into chat "for confirmation". Write the file, name the path.
+- No emoji, no banners, no decorative tables.
 
-## 2. Aturan Baca (input token)
+## 2. Read rules (input tokens)
 
-- **Jangan** membaca `latest_scrape.json`, `github_refs.json`, `arxiv_refs.json` secara utuh. Ukurannya puluhan KB.
-  Gunakan `python3 tools/job_digest.py` dan `python3 tools/ref_digest.py`.
-- Baca file panjang dengan rentang baris (`offset`/`limit`) atau `grep`. Baca penuh hanya jika file < 150 baris.
-- Jangan membaca ulang file yang baru saja ditulis sendiri.
-- Jangan membaca seluruh `PLAN.md`/`README.md` untuk menjalankan tugas. Butuh aturan? Baca modul skill yang relevan saja.
-- Satu file referensi dibaca sekali per sesi. Simpan ringkasan 1 baris di catatan kerja internal, bukan di chat.
+- **Never** read `latest_scrape.json`, `github_refs.json`, or `arxiv_refs.json` in full. They are tens of KB.
+  Use `python3 tools/job_digest.py` and `python3 tools/ref_digest.py`.
+- Read long files by line range (`offset`/`limit`) or with `grep`. Read in full only if under 150 lines.
+- Never re-read a file you just wrote.
+- Never read `PLAN.md` or `README.md` to perform a task. Need a rule? Read the relevant skill module.
+- Read a reference file once per session. Keep a 1-line takeaway internally, not in chat.
 
-## 3. Aturan Tulis (output token)
+## 3. Write rules (output tokens)
 
-Batas kata per file. Ini batas keras, bukan saran.
+Word ceilings per file. Hard limits, not suggestions.
 
-| File | Maks kata | Isi |
+| File | Max words | Contents |
 |---|---|---|
-| `00_job_analysis.md` | 450 | kebutuhan loker, gap, 1 paragraf masalah bisnis |
-| `01_project_ideation.md` | 550 | 3 opsi ringkas + pilihan + alasan |
-| `02_system_blueprint.md` | 1500 | konsep arsitektur, data, metrik, roadmap |
-| `03_references_study.md` | 400 | 3 repo + 2 paper, masing-masing 1–2 baris |
-| `04_review_report.md` | 350 | maks 12 temuan, format tabel |
-| `05_agent_prompts.md` | 900 | 1 prompt konteks + 1 prompt per milestone + 1 prompt review |
+| `00_job_analysis.md` | 450 | posting requirements, gap, one business-problem paragraph |
+| `01_project_ideation.md` | 550 | 3 compact options + choice + non-goals |
+| `02_system_blueprint.md` | 1500 | concept architecture, data, metrics, workflow |
+| `03_references_study.md` | 400 | 3 repos + 2 papers, 1-2 lines each |
+| `04_review_report.md` | 350 | max 12 findings, table format |
+| `05_agent_prompts.md` | 900 | 1 context prompt + 1 per milestone + 1 review prompt |
 
-Aturan tambahan:
-- Tidak ada duplikasi antar file. Fakta ditulis sekali di tempat paling relevan.
-- Tidak ada pengulangan kesimpulan di akhir setiap bab.
-- Tanpa basa-basi pembuka ("Tentu", "Berikut adalah"). Langsung isi.
-- Tabel lebih murah daripada prosa berulang. Pakai tabel untuk perbandingan.
+Additional rules:
+- No duplication across files. State a fact once, where it matters most.
+- No restating conclusions at the end of every section.
+- No filler openers ("Sure", "Here is"). Go straight to content.
+- Tables are cheaper than repeated prose. Use them for comparisons.
 
-## 4. Aturan Kedalaman (konsep, bukan kode)
+## 4. Depth rules (concept, not code)
 
-Blueprint adalah **dokumen keputusan dan pemahaman**, bukan tutorial implementasi.
+A blueprint is a **decision and understanding document**, not an implementation tutorial.
 
-Dilarang di dalam blueprint:
-- Blok kode lebih dari 5 baris, pseudocode panjang, DDL `CREATE TABLE`, payload JSON penuh.
-- Struktur folder per-file, daftar dependency lengkap, konfigurasi Docker.
-- Langkah instalasi, perintah shell, atau tutorial langkah-demi-langkah.
-- Nama fungsi/kelas internal. Sebut tanggung jawab komponen, bukan simbol kode.
+Forbidden inside a blueprint:
+- Code blocks longer than 5 lines, long pseudocode, `CREATE TABLE` DDL, full JSON payloads.
+- Per-file folder trees, complete dependency lists, Docker configuration.
+- Install steps, shell commands, or step-by-step tutorials.
+- Internal function or class names. Describe component responsibilities, not symbols.
 
-Wajib ada: masalah, aktor, alur, komponen + tanggung jawab, konsep data, konsep antarmuka, teori/algoritma kunci, metrik, risiko, non-goals, roadmap, bullet CV.
+Required: problem, actors, flow, components + responsibilities, data concepts, interface concepts, key theory, metrics, risks, non-goals, workflow, CV bullets.
 
-Kode detail diserahkan ke `05_agent_prompts.md` (prompt untuk agent lain) atau `/scaffold` (opsional).
+Code detail belongs in `05_agent_prompts.md` (as short instructions for another agent) or in `/scaffold` (optional).
 
-## 5. Anggaran per Fase `/applyidea`
+## 5. Budget per `/applyidea` phase
 
-| Fase | Batas kerja |
+| Phase | Work limit |
 |---|---|
-| 1. Akuisisi + riset | 3 tool call digest, tanpa dump |
-| 2. Draf | tulis 5 file sekali jalan, tanpa revisi gaya |
-| 3. Review | patch beda minimal, bukan tulis ulang dokumen |
-| 4. Render + PDF | jalankan tool, laporkan hasil 1 baris |
+| 1. Acquire + research | 3 digest tool calls, no dumps |
+| 2. Draft | write all files in one pass, no style revisions |
+| 3. Review | minimal diff patch, not a rewrite |
+| 4. Render + PDF | run the tool, report 1 line |
 
-Reviewer hanya boleh mengubah bagian yang gagal quality gate. Dilarang menulis ulang file yang sudah lolos.
+The reviewer may only change sections that failed the quality gate. Never rewrite a file that already passed.
 
-## 6. Eksekusi Tool
-- Satu tool call per langkah, sekali per fase. Jangan mengulang tool hanya untuk menampilkan ulang output.
-- Jangan membuka/membaca PDF atau PNG hasil jadi. Percayai `verify_pdf.py`.
-- Kutip log error maksimal 5 baris terakhir.
+## 6. Tool execution
+- One call per step, once per phase. Do not re-run a tool just to display its output again.
+- Never open or read a finished PDF or PNG. Trust `verify_pdf.py`.
+- Quote at most the last 5 lines of an error log.
 
-## 7. Larangan Umum
+## 7. General prohibitions
 
-- Jangan mengulang isi PDF di chat setelah kompilasi.
-- Jangan membuat ringkasan eksekutif kedua di dalam dokumen.
-- Jangan menambahkan bab baru di luar template.
-- Jangan meminta konfirmasi di tengah alur kecuali ada data yang benar-benar hilang.
+- Never repeat PDF contents in chat after compiling.
+- Never add a second executive summary inside a document.
+- Never add sections outside the template.
+- Never ask for confirmation mid-flow unless data is genuinely missing.
+- Never write in a language other than the one configured in `.claude/config/lang.md`.

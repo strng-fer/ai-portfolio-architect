@@ -1,9 +1,11 @@
 ---
-description: Perkaya profil kandidat dari dokumen baru atau GitHub (patch minimal)
+description: Enrich the candidate profile from new documents or GitHub (minimal patch)
 ---
 
-Sumber baru: `$ARGUMENTS` (URL GitHub, nama file di `documents/`, atau teks bebas).
+New source: `$ARGUMENTS` (GitHub URL, file name in `documents/`, or free text).
 
-1. Baca dokumen/sumber tersebut. Untuk URL GitHub, ambil ringkasan repo/README saja, bukan seluruh riwayat.
-2. Patch `.claude/skills/portfolio-architect/01-candidate-profile.md` secara aditif: tambah atau perbarui baris yang relevan. Jangan menulis ulang file, jangan menghapus data valid.
-3. Output maksimal 4 baris: apa yang ditambahkan + 1 baris next step.
+1. Read that source. For a GitHub URL, take only the repo summary/README, not full history.
+2. Patch `.claude/skills/portfolio-architect/01-candidate-profile.md` additively: add or update relevant lines. Do not rewrite the file, do not delete valid data.
+3. Print max 4 lines: what was added + 1 next-step line.
+
+Match the file's existing language. If the profile is still empty, use the language from `.claude/config/lang.md`.

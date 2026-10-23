@@ -1,55 +1,59 @@
 ---
-description: Buat blueprint konseptual + diagram + PDF dari satu loker (mode hemat token)
+description: Build a conceptual blueprint + diagrams + PDF from one job posting (token-lean)
 ---
 
 Target: `$ARGUMENTS`
 
-Format: `<url|id_loker>` dengan opsi `--prompts` untuk ikut membuat paket prompt agent. Opsi `--no-pdf` hanya menulis Markdown.
+Format: `<url|job_id>` with optional `--prompts` to also write the agent prompt pack, and `--no-pdf` to write Markdown only.
 
-**Wajib patuhi `.claude/skills/portfolio-architect/08-token-discipline.md`.**
-Dokumen ditulis ke file. Chat hanya 1 baris status per fase, maksimal 10 baris total di akhir.
+**Obey `.claude/skills/portfolio-architect/08-token-discipline.md`.**
+Write documents to files. Chat gets one status line per phase, max 10 lines at the end.
 
-### FASE 1 — Data & referensi (tanpa dump)
-1. Jika argumen berupa angka/ID: `python3 tools/job_digest.py detail <id>`.
-   Jika berupa URL: `python3 tools/fetch_page.py "<url>" > job_scraper/current_job_raw.txt`, lalu `python3 tools/posting_guard.py job_scraper/current_job_raw.txt > job_scraper/current_job_clean.md`, lalu baca file clean.
-2. Baca hanya `01-candidate-profile.md`, `02-constraints-profile.md`, `03-architecture-style.md`.
-3. Rumuskan 1–2 kata kunci teknis dari tanggung jawab utama loker.
-4. Jalankan `mine_github.py --query "<kata_kunci>" --limit 6` dan `mine_arxiv.py --query "<kata_kunci>" --limit 4`, lalu `python3 tools/ref_digest.py`.
-   Jangan membaca `github_refs.json` / `arxiv_refs.json` mentah.
+### PHASE 1 - Data & references (no dumps)
+1. If the argument is a number/ID: `python3 tools/job_digest.py detail <id>`.
+   If it is a URL: `python3 tools/fetch_page.py "<url>" > job_scraper/current_job_raw.txt`, then `python3 tools/posting_guard.py job_scraper/current_job_raw.txt > job_scraper/current_job_clean.md`, then read the clean file.
+2. Read only `00-language.md`, `01-candidate-profile.md`, `02-constraints-profile.md`, `03-architecture-style.md`.
+3. Derive 1-2 technical keywords from the posting's main responsibilities.
+4. Run `mine_github.py --query "<keywords>" --limit 6` and `mine_arxiv.py --query "<keywords>" --limit 4`, then `python3 tools/ref_digest.py`.
+   Never read `github_refs.json` / `arxiv_refs.json` raw.
 
-### FASE 2 — Draf konseptual (tulis sekali jalan)
-Buat `portfolios/<perusahaan_slug>_<posisi_slug>/` dan subfolder `diagrams/`. Tulis:
+### PHASE 2 - Conceptual draft (single pass)
+Create `portfolios/<company_slug>_<role_slug>/` with a `diagrams/` subfolder. Write:
 
-| File | Aturan |
+| File | Rule |
 |---|---|
-| `00_job_analysis.md` | sesuai `09-lowlevel-output.md`, ≤450 kata |
-| `01_project_ideation.md` | 3 opsi + pilihan + non-goals, ≤550 kata |
-| `02_system_blueprint.md` | struktur `05-blueprint-templates.md`, ≤1500 kata |
-| `03_references_study.md` | 3 repo + 2 paper dari digest, ≤400 kata |
-| `diagrams/system_architecture.mmd` | `flowchart`, maks 15 node, aturan `06-diagram-rules.md` |
-| `diagrams/user_workflow.mmd` | `sequenceDiagram`, maks 6 aktor/pesan utama |
-| `05_agent_prompts.md` | hanya jika `--prompts`, aturan `10-agent-prompt-pack.md`, ≤900 kata |
+| `00_job_analysis.md` | per `09-lowlevel-output.md`, <=450 words |
+| `01_project_ideation.md` | 3 options + choice + non-goals, <=550 words |
+| `02_system_blueprint.md` | structure from `05-blueprint-templates.md`, <=1500 words |
+| `03_references_study.md` | 3 repos + 2 papers from the digest, <=400 words |
+| `diagrams/system_architecture.mmd` | `flowchart`, max 15 nodes, per `06-diagram-rules.md` |
+| `diagrams/user_workflow.mmd` | `sequenceDiagram`, max 6 actors/main messages |
+| `05_agent_prompts.md` | only with `--prompts`, per `10-agent-prompt-pack.md`, <=900 words |
 
-Aturan kedalaman (keras): tanpa DDL, tanpa payload JSON, tanpa blok kode >5 baris, tanpa struktur folder, tanpa tutorial instalasi. Tulis konsep, teori, masalah, solusi, dan keputusan desain. Detail eksekusi hanya boleh muncul di `05_agent_prompts.md` sebagai instruksi singkat.
+Depth rules (hard): no DDL, no JSON payloads, no code blocks over 5 lines, no folder trees, no install tutorials. Write concept, theory, problem, solution, and design decisions. Execution detail may appear only in `05_agent_prompts.md` as short instructions.
 
-### FASE 3 — Review gate (patch minimal)
-Nilai 6 kriteria di `09-lowlevel-output.md`. Patch hanya bagian yang gagal. Tulis `04_review_report.md` (≤350 kata, maks 12 temuan).
+Write every document in the language from `.claude/config/lang.md`.
 
-### FASE 4 — Render & PDF
-1. `python3 tools/compile_diagrams.py portfolios/<slug>/diagrams/` (perbaiki `.mmd` hanya bila gagal).
-2. `python3 tools/compile_pdf.py portfolios/<slug>/` — PDF memuat 00–05 (yang ada).
+### PHASE 3 - Review gate (minimal patch)
+Score the 6 criteria in `09-lowlevel-output.md`. Patch only failing sections. Write `04_review_report.md` (<=350 words, max 12 findings).
+
+### PHASE 4 - Render & PDF
+1. `python3 tools/compile_diagrams.py portfolios/<slug>/diagrams/` (fix `.mmd` only on failure).
+2. `python3 tools/compile_pdf.py portfolios/<slug>/` - PDF includes 00-05 when present.
 3. `python3 tools/verify_pdf.py portfolios/<slug>/Blueprint_Final.pdf`.
-4. Tambahkan 1 baris ke `portfolio_tracker.csv` (tanggal, perusahaan, posisi, judul project, folder, `BLUEPRINT_READY`).
+4. Append one row to `portfolio_tracker.csv` (date, company, role, project title, folder, `BLUEPRINT_READY`).
 
-Lewati langkah 2–3 bila `--no-pdf`.
+Skip steps 2-3 when `--no-pdf` is set.
 
-### Output akhir (maks 10 baris)
+Language: write 00-05 and diagram labels in the language from `.claude/config/lang.md`. Keep file names, folder slugs, and CSV headers in English.
+
+### Final output (max 10 lines)
 ```
 PDF: portfolios/<slug>/Blueprint_Final.pdf
-Prompt pack: portfolios/<slug>/05_agent_prompts.md  (atau "-")
-Ide: <1 baris>
-Gap utama: <1 baris>
-Metrik kunci: <1 baris>
+Prompt pack: portfolios/<slug>/05_agent_prompts.md  (or "-")
+Idea: <1 line>
+Main gap: <1 line>
+Key metric: <1 line>
 Next: /prompt <slug> | /scaffold <slug>
 ```
-Tanpa ringkasan bab, tanpa kutipan isi dokumen.
+No section summaries, no document quotes.

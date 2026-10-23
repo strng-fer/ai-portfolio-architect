@@ -1,17 +1,17 @@
 ---
-description: Buat paket prompt/instruksi agent dari blueprint yang sudah ada
+description: Create the agent prompt pack from an existing blueprint
 ---
 
-Target folder portofolio: `$ARGUMENTS`
+Target portfolio folder: `$ARGUMENTS`
 
-Baca `02_system_blueprint.md` (bagian roadmap, stack, non-goals) dan `01_project_ideation.md` (bagian pilihan). Jangan baca file lain.
+Read `02_system_blueprint.md` (workflow, stack, non-goals sections) and `01_project_ideation.md` (choice section). Read nothing else.
 
-Tulis `$ARGUMENTS/05_agent_prompts.md` mengikuti `.claude/skills/portfolio-architect/10-agent-prompt-pack.md`:
-- P0 context prompt (berdiri sendiri, memuat stack, batasan free-tier, konvensi, larangan).
-- Satu prompt per milestone roadmap (maks 6).
-- Satu prompt review/benchmark.
-- Setiap prompt ≤150 kata, format Goal / Context / Task / Constraints / Deliverable / Done when / Out of scope.
+Write `$ARGUMENTS/05_agent_prompts.md` following `.claude/skills/portfolio-architect/10-agent-prompt-pack.md`:
+- P0 context prompt (stands alone: stack, free-tier limits, conventions, prohibitions).
+- One prompt per workflow milestone (max 6).
+- One review/benchmark prompt.
+- Each prompt <=150 words, format Goal / Context / Task / Constraints / Deliverable / Done when / Out of scope.
 
-Lalu jalankan `python3 tools/compile_pdf.py $ARGUMENTS` dan `python3 tools/verify_pdf.py $ARGUMENTS/Blueprint_Final.pdf`.
+Write in the language from `.claude/config/lang.md`. Then run `python3 tools/compile_pdf.py $ARGUMENTS` and `python3 tools/verify_pdf.py $ARGUMENTS/Blueprint_Final.pdf`.
 
-Output maksimal 5 baris: path prompt pack, jumlah prompt, path PDF, 1 baris catatan.
+Final output max 5 lines: prompt pack path, prompt count, PDF path, one note line.

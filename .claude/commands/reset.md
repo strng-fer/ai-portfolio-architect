@@ -1,8 +1,8 @@
 ---
-description: Reset profil atau bersihkan cache scraping (tanpa narasi)
+description: Reset the profile or clear the scrape cache (no narration)
 ---
 
-Jika `$ARGUMENTS` = `all`: reset `.claude/skills/portfolio-architect/01-candidate-profile.md` dan `02-constraints-profile.md` ke template kosong, lalu hapus file cache di `job_scraper/` (bukan folder `portfolios/`).
-Jika tanpa argumen: hapus hanya file cache di `job_scraper/`.
+If `$ARGUMENTS` = `all`: reset `.claude/skills/portfolio-architect/01-candidate-profile.md` and `02-constraints-profile.md` to empty templates, then delete cache files in `job_scraper/` (never the `portfolios/` folder).
+Without arguments: delete only cache files in `job_scraper/`.
 
-Output 1 baris berisi file apa saja yang dihapus/direset.
+Print one line listing what was deleted or reset. Never touch `.claude/config/lang.md`.

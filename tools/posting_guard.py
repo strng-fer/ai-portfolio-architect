@@ -3,7 +3,7 @@ import re
 import sys
 from pathlib import Path
 
-# Force UTF-8 di Windows (cp1252 menghambat karakter unicode dari halaman web)
+# Force UTF-8 on Windows (cp1252 cannot encode unicode from web pages)
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 

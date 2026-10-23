@@ -7,20 +7,27 @@ __pycache__/
 venv/
 ENV/
 env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Node
 node_modules/
+package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Machine-specific puppeteer config (auto-generated, berisi path lokal)
+# Machine-specific puppeteer config (auto-generated, contains a local path)
 tools/.puppeteer-config.json
 
 # Environment & Secrets
 .env
 .env.*
 *.env
+*.pem
+*.key
+secrets.*
 
 # IDE & Editors
 .vscode/
@@ -30,7 +37,7 @@ tools/.puppeteer-config.json
 *.sublime-project
 *.sublime-workspace
 
-# Candidate Personal Documents (mencegah kebocoran data pribadi ke remote repo)
+# Candidate personal documents (prevents leaking private data to the remote repo)
 documents/cv/*
 !documents/cv/.gitkeep
 documents/linkedin/*
@@ -40,19 +47,21 @@ documents/transcripts/*
 documents/past_projects/*
 !documents/past_projects/.gitkeep
 
-# Cache hasil scraping & analisis (regeneratable)
-job_scraper/latest_scrape.json
-job_scraper/ranked_jobs.json
-job_scraper/github_refs.json
-job_scraper/arxiv_refs.json
-job_scraper/current_job_raw.txt
-job_scraper/current_job_clean.md
-job_scraper/linkedin_fetched.json
-job_scraper/*.json
+# Scrape cache (regeneratable, personal: contains job URLs and raw page text)
+job_scraper/*
 !job_scraper/.gitkeep
 
-# Symlink/copy hasil setup_cli_links.sh (regeneratable)
+# Mirror produced by setup_cli_links.sh (regeneratable from .claude/commands)
 .opencode/
+
+# Generated blueprint artifacts (keep the .md sources, drop regenerated output)
+portfolios/**/Blueprint_Final.pdf
+portfolios/**/Blueprint_Final.md
+portfolios/**/diagrams/*.png
+
+# Local test scratch folders (any _-prefixed folder under these roots)
+portfolios/_*/
+job_scraper/_*/
 
 # OS
 .DS_Store
@@ -62,5 +71,7 @@ Desktop.ini
 # Log & temp
 *.log
 *.tmp
+*.bak
 
+# One-off build spec, superseded by CLAUDE.md + skills
 PLAN.md

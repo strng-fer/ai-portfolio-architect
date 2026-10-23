@@ -9,15 +9,15 @@ def main():
 
     pdf_path = Path(sys.argv[1])
     if not pdf_path.exists():
-        print(f"[X] File PDF tidak ditemukan: {pdf_path}")
+        print(f"[X] PDF file not found: {pdf_path}")
         sys.exit(1)
 
     size_kb = pdf_path.stat().st_size / 1024
     if size_kb < 5:
-        print(f"[X] Ukuran PDF terlalu kecil ({size_kb:.1f} KB), kemungkinan korup.")
+        print(f"[X] PDF too small ({size_kb:.1f} KB), probably corrupt.")
         sys.exit(1)
 
-    print(f"[+] PDF terverifikasi valid: {pdf_path} ({size_kb:.1f} KB)")
+    print(f"[+] PDF verified: {pdf_path} ({size_kb:.1f} KB)")
 
 if __name__ == "__main__":
     main()

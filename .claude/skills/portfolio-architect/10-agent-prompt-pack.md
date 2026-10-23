@@ -1,44 +1,48 @@
 # Agent Prompt Pack (`05_agent_prompts.md`)
 
-Tujuan: blueprint bisa langsung dieksekusi oleh agent lain (Cursor, Claude Code, Codex, Gemini CLI, ChatGPT) tanpa perlu menjelaskan ulang konteks. **Batas 900 kata.**
+Purpose: let another agent (Cursor, Claude Code, Codex, Gemini CLI, ChatGPT) execute the blueprint without re-explaining context. **Max 900 words.**
 
-## Struktur file
+## File structure
 
 ```
-# Agent Prompt Pack — <Nama Project>
-Cara pakai (3 baris) + urutan eksekusi.
+# Agent Prompt Pack - <Project Name>
+How to use (3 lines) + execution order.
 
-## P0 — Context Prompt (pakai di awal setiap sesi)
-## P1 — <Milestone 1>
-## P2 — <Milestone 2>
-## P3 — <Milestone 3>
-## P4 — <Milestone 4>
-## P5 — Review & Benchmark
+## P0 - Context Prompt (use at the start of every session)
+## P1 - <Milestone 1>
+## P2 - <Milestone 2>
+## P3 - <Milestone 3>
+## P4 - <Milestone 4>
+## P5 - Review & Benchmark
 ```
 
-Jumlah milestone mengikuti roadmap di blueprint. Maks 6 prompt total.
+Milestone count follows the blueprint workflow. Max 6 prompts total.
 
-## Format tiap prompt (wajib, urutan tetap)
+## Format of each prompt (required, fixed order)
 
-- **Goal** — 1 kalimat hasil akhir.
-- **Context** — file/section blueprint yang perlu dibaca agent (path relatif), maks 3.
-- **Task** — 3–5 langkah, imperatif, satu tindakan per langkah.
-- **Constraints** — bahasa/framework, batas waktu, batas kuota, gaya kode, hal yang dilarang.
-- **Deliverable** — file/endpoint/test yang harus ada.
-- **Done when** — kriteria verifikasi yang bisa dijalankan (test lulus, metrik tercapai, perintah sukses).
-- **Out of scope** — hal yang tidak boleh dikerjakan di milestone ini.
+- **Goal** - one sentence describing the end result.
+- **Context** - blueprint files/sections the agent must read (relative path), max 3.
+- **Task** - 3-5 steps, imperative, one action per step.
+- **Constraints** - language/framework, time limit, quota limits, code style, prohibitions.
+- **Deliverable** - files/endpoints/tests that must exist.
+- **Done when** - verifiable criteria (tests pass, metric reached, command succeeds).
+- **Out of scope** - what must not be touched in this milestone.
 
-## Aturan isi
-- Setiap prompt berdiri sendiri: agent baru bisa mulai tanpa riwayat chat.
-- Maks 150 kata per prompt. Tanpa kode panjang; sebut kontrak, bukan implementasi.
-- Selalu sertakan non-goals dan batas free-tier dari `02-constraints-profile.md`.
-- P0 memuat: tujuan project, stack, struktur folder yang diharapkan (5 baris), konvensi, dan larangan.
-- Prompt review memuat perintah menjalankan test/benchmark dan format laporan temuan.
-- Jangan menyertakan rahasia, token, atau URL internal.
+## Writing language
+Write prompts in the configured output language, but keep code identifiers, file paths, and shell commands in English so they can be pasted as-is.
 
-Contoh terisi: `templates/agent_prompt_pack.example.md`.
+## Content rules
+- Every prompt stands alone: a fresh agent can start with no chat history.
+- Max 150 words per prompt. No long code; state the contract, not the implementation.
+- Always include the non-goals and free-tier limits from `02-constraints-profile.md`.
+- P0 carries: project goal, stack, expected folder shape (5 lines), conventions, prohibitions.
+- The review prompt carries the test/benchmark commands and the findings report format.
+- Never include secrets, tokens, or internal URLs.
+- Write prompts in the configured output language, but keep code identifiers and commands in English.
 
-## Varian opsional
-Jika user meminta, tambahkan:
-- `## P-Chat` — versi ringkas untuk chat assistant (tanpa akses file).
-- `## P-Refactor` — instruksi perbaikan setelah benchmark gagal.
+## Optional variants
+On request, add:
+- `## P-Chat` - compact version for a chat assistant with no file access.
+- `## P-Refactor` - repair instructions after a failed benchmark.
+
+Filled example: `templates/agent_prompt_pack.example.md`.

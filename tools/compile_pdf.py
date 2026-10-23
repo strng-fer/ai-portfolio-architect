@@ -49,10 +49,10 @@ def main():
 
     full_md = target_dir / "Blueprint_Final.md"
     full_md.write_text(combined_text, encoding="utf-8")
-    print(f"[+] Dokumen gabungan tersimpan di {full_md}")
+    print(f"[+] Combined document written to {full_md}")
 
     out_pdf = target_dir / "Blueprint_Final.pdf"
-    print("[*] Mengonversi ke PDF menggunakan md-to-pdf...")
+    print("[*] Converting to PDF with md-to-pdf...")
     npx = shutil.which("npx") or shutil.which("npx.cmd") or "npx"
     cmd = [npx, "--yes", "md-to-pdf", str(full_md)]
     env = dict(os.environ)
@@ -61,12 +61,12 @@ def main():
         env["PUPPETEER_EXECUTABLE_PATH"] = browser
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=90, env=env)
     if res.returncode == 0 and out_pdf.exists():
-        print(f"[+] PDF berhasil dibuat: {out_pdf}")
+        print(f"[+] PDF created: {out_pdf}")
         sys.exit(0)
     else:
         print(f"[!] md-to-pdf output: {res.stderr}")
 
-    print("[!] Pastikan Node.js/npx tersedia untuk kompilasi PDF otomatis.")
+    print("[!] Make sure Node.js/npx is available for automatic PDF compilation.")
     sys.exit(1)
 
 if __name__ == "__main__":

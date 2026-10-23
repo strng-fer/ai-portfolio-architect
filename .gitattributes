@@ -1,0 +1,23 @@
+# Normalize line endings so the repo works on Windows, macOS, and Linux.
+* text=auto eol=lf
+
+# Shell scripts must keep LF or they break under bash.
+*.sh text eol=lf
+
+# Python: LF is safe on every platform.
+*.py text eol=lf
+
+# Batch/PowerShell need CRLF on Windows.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary and generated artifacts: never diff, never convert.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

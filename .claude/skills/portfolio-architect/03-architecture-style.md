@@ -1,23 +1,23 @@
 # Architecture & Ideation Standards
 
-## Prinsip Utama: "Built Like Production, Scoped Like a Sprint"
-Setiap ide project portofolio WAJIB memenuhi:
-1. **Satu Masalah Inti yang Dalam (Narrow & Deep)**: satu mekanisme yang benar-benar sulit (konsistensi, evaluasi, latensi, duplikasi, kepatuhan) lebih bernilai daripada aplikasi utuh yang dangkal.
-2. **Metrik Kuantitatif**: setiap blueprint menyebut cara mengukur (benchmark beban, evaluation set, metrik akurasi/latensi) dan baseline pembanding.
-3. **Menjembatani Background Peserta**: domain yang sudah akrab dipakai sebagai konteks, teknologi baru dari loker dipakai sebagai tantangan belajar.
+## Core principle: "Built Like Production, Scoped Like a Sprint"
+Every portfolio idea MUST satisfy:
+1. **One narrow, deep problem**: one genuinely hard mechanism (consistency, evaluation, latency, duplication, compliance) beats a shallow full application.
+2. **Quantitative metrics**: every blueprint states how it is measured (load benchmark, evaluation set, accuracy/latency metric) and a comparison baseline.
+3. **Bridge the candidate's background**: use a familiar domain as context and the posting's new technology as the learning challenge.
 
-## Kedalaman Dokumen: Konsep, Bukan Kode
-Blueprint adalah dokumen keputusan. Yang wajib ada: masalah, aktor, alur, komponen + tanggung jawab, konsep data, konsep antarmuka, teori kunci, metrik, risiko, roadmap.
-Yang dilarang: implementasi, DDL, payload penuh, struktur folder, tutorial. Detail teknis diserahkan ke `05_agent_prompts.md`.
+## Document depth: concept, not code
+A blueprint is a decision document. Required: problem, actors, flow, components + responsibilities, data concepts, interface concepts, key theory, metrics, risks, workflow.
+Forbidden: implementation, DDL, full payloads, folder trees, tutorials. Technical detail goes to `05_agent_prompts.md`.
 
-## Pagar Anti-Overengineering Dokumen
-- Satu konsep dijelaskan sekali. Rujuk silang, jangan ulang.
-- Teori cukup nama + 1 kalimat kegunaan. Bukan penjelasan akademik.
-- Tabel menggantikan prosa berulang. Maks 6 kolom.
-- Setiap bab harus bisa dihapus tanpa merusak bab lain, kecuali bagian masalah.
+## Anti-overengineering fence
+- Explain each concept once. Cross-reference instead of repeating.
+- Theory gets a name plus one sentence of purpose. Not an academic essay.
+- Tables replace repeated prose. Max 6 columns.
+- Every section must be removable without breaking the others, except the problem section.
 
-## Kualitas Ide: Uji Tiga Pertanyaan
-1. Apakah masalahnya bisa dijelaskan dalam 1 kalimat tanpa menyebut teknologi?
-2. Apakah ada satu bagian yang sulit dan layak dibahas di interview?
-3. Apakah hasilnya bisa dibuktikan dengan angka dalam waktu yang tersedia?
-Jika ada jawaban "tidak", revisi ide sebelum menulis blueprint.
+## Three-question idea test
+1. Can the problem be stated in one sentence without naming technology?
+2. Is there one hard part worth discussing in an interview?
+3. Can the result be proven with numbers within the available time?
+Any "no" -> revise the idea before writing the blueprint.

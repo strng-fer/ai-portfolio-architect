@@ -1,13 +1,13 @@
 ---
-description: Buat starter repo dari blueprint (opsional, tidak masuk alur utama)
+description: Generate a starter repo from the blueprint (optional, outside the main flow)
 ---
 
 Target: `$ARGUMENTS`
 
-Jika `05_agent_prompts.md` ada, workstation utama sudah cukup dengan prompt pack itu — tanyakan 1 baris apakah tetap ingin scaffold.
+If `05_agent_prompts.md` exists, the prompt pack is already enough for execution - ask in one line whether scaffolding is still wanted.
 
-Langkah:
-1. Baca `02_system_blueprint.md` bagian 4 (stack), 5 (data & antarmuka), 8 (roadmap). Jangan baca bagian lain.
-2. Buat `$ARGUMENTS/starter_repo/` berisi: struktur folder, `docker-compose.yml`/`Dockerfile`, file dependency, 2–3 file boilerplate inti, `README.md` ringkas (maks 40 baris), dan `TODO.md` per milestone.
-3. Jangan menulis test atau logika bisnis penuh. Kode detail adalah tugas milestone di prompt pack.
-4. Output maksimal 5 baris: path repo, jumlah file, 1 baris catatan.
+Steps:
+1. Read `02_system_blueprint.md` sections 5 (stack), 7 (data & interfaces), 10 (workflow). Read nothing else.
+2. Create `$ARGUMENTS/starter_repo/` containing: folder skeleton, `docker-compose.yml`/`Dockerfile`, dependency files, 2-3 core boilerplate files, a short `README.md` (max 40 lines), and `TODO.md` per milestone.
+3. Do not write tests or full business logic. Implementation is the job of the milestones in the prompt pack.
+4. Print max 5 lines: repo path, file count, one note line.
