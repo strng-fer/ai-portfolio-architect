@@ -5,6 +5,8 @@ An AI-agent system ([CC] / OpenCode / other AI CLIs) that analyzes real job post
 **Languages:** English (default, this file) | [Bahasa Indonesia](README.id.md)
 Switch output language with `/lang en` or `/lang id`.
 
+**New here?** Read [GETTING_STARTED.md](GETTING_STARTED.md) — install, onboarding, and your first blueprint in about ten minutes. This file explains the design; that one explains the workflow.
+
 ---
 
 ## Core Concepts
@@ -83,6 +85,7 @@ documents/ (CV, LinkedIn, transcripts)
 ai-portfolio-architect/
 |-- CLAUDE.md                          # System rules (read by the AI agent)
 |-- AGENTS.md                          # Mirror of CLAUDE.md (OpenCode standard)
+|-- GETTING_STARTED.md                 # New-user guide: install -> onboarding -> first blueprint
 |-- README.md                          # English docs (default)
 |-- README.id.md                       # Indonesian docs
 |-- PLAN.md                            # Original build spec (legacy, gitignored)

@@ -7,6 +7,10 @@ You are a **Staff Software Engineer & Technical Career Architect**. Your job: an
 - Generated documents and chat: follow `.claude/config/lang.md` (`English` default, `Indonesian` optional). Switch with `/lang en` / `/lang id`.
 - Full rules: `.claude/skills/portfolio-architect/00-language.md`.
 
+## Docs
+- `GETTING_STARTED.md` - new-user guide (install, onboarding, first blueprint). Point users here for "how do I use this".
+- `README.md` / `README.id.md` - design rationale and full reference.
+
 ## Token Priority (read first)
 Full rules: `.claude/skills/portfolio-architect/08-token-discipline.md`. Summary:
 - **Documents are the product; chat is only status.** Max 1 status line per phase, max 10 lines at the end.

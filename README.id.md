@@ -5,6 +5,8 @@ Sistem berbasis AI agent ([CC] / OpenCode / AI CLI lain) yang menganalisis lowon
 **Bahasa:** [English](README.md) (default) | Bahasa Indonesia (file ini)
 Ganti bahasa output dengan `/lang en` atau `/lang id`.
 
+**Baru di sini?** Baca [GETTING_STARTED.md](GETTING_STARTED.md) — instalasi, onboarding, dan blueprint pertama dalam sekitar sepuluh menit. File ini menjelaskan desainnya; file itu menjelaskan alur kerjanya.
+
 ---
 
 ## Konsep Inti
@@ -85,6 +87,7 @@ ai-portfolio-architect/
 |-- AGENTS.md                          # Salinan CLAUDE.md (standar OpenCode)
 |-- README.md                          # Dokumentasi Inggris (default)
 |-- README.id.md                       # Dokumentasi Indonesia
+|-- GETTING_STARTED.md                 # Panduan pengguna baru: instalasi -> onboarding -> blueprint pertama
 |-- setup_cli_links.sh                 # Script integrasi lintas AI CLI
 |-- portfolio_tracker.csv              # Tracker semua blueprint
 |-- .claude/

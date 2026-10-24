@@ -73,7 +73,7 @@ def parse_catalogue(path: Path) -> tuple[list[dict], str | None]:
                 "id": mech_id,
                 "name": cells[1],
                 "domains": [d.strip() for d in cells[2].split(",") if d.strip()],
-                "signals": [s.strip().lower() for s in cells[3].split(",") if s.strip()],
+                "signals": tokenise(cells[3].replace(",", " ")),
                 "cost": cost,
                 "metrics": cells[5],
                 "fails": cells[6],
