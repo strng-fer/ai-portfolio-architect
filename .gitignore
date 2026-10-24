@@ -63,6 +63,9 @@ portfolios/**/diagrams/*.png
 portfolios/_*/
 job_scraper/_*/
 
+# Private portfolios (candidate's own work, not for public repo)
+portfolios/kredivo_group_data_scientist_ai_collection/
+
 # OS
 .DS_Store
 Thumbs.db
