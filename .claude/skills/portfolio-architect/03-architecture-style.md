@@ -2,9 +2,20 @@
 
 ## Core principle: "Built Like Production, Scoped Like a Sprint"
 Every portfolio idea MUST satisfy:
-1. **One narrow, deep problem**: one genuinely hard mechanism (consistency, evaluation, latency, duplication, compliance) beats a shallow full application.
-2. **Quantitative metrics**: every blueprint states how it is measured (load benchmark, evaluation set, accuracy/latency metric) and a comparison baseline.
-3. **Bridge the candidate's background**: use a familiar domain as context and the posting's new technology as the learning challenge.
+1. **One narrow, deep problem**: one genuinely hard mechanism (consistency, evaluation, latency, duplication, compliance) beats a shallow full application. The mechanism is selected from `12-mechanism-catalogue.md`, not invented.
+2. **Quantitative metrics**: every blueprint states how it is measured (load benchmark, evaluation set, accuracy/latency metric) and a comparison baseline. The metric family comes from the active role pack (`.claude/config/pack.md`).
+3. **Bridge the candidate's background**: use a familiar domain as context and the posting's new technology as the learning challenge. The `missing` rows in `01b-skill-evidence.md` define that new axis.
+
+## Personalisation inputs
+Ideas differ per candidate only when these three inputs differ:
+
+| Input | File | What it decides |
+|---|---|---|
+| Evidence | `01b-skill-evidence.md` | which stack is reused, which is learned |
+| History | `portfolios/_history.json` | which mechanism is novel, which deepens |
+| Pack | `.claude/config/pack.md` | which metrics are legitimate, which ideas are banned |
+
+If two candidates get the same idea from the same posting, at least one of these inputs was ignored.
 
 ## Document depth: concept, not code
 A blueprint is a decision document. Required: problem, actors, flow, components + responsibilities, data concepts, interface concepts, key theory, metrics, risks, workflow.
@@ -20,4 +31,4 @@ Forbidden: implementation, DDL, full payloads, folder trees, tutorials. Technica
 1. Can the problem be stated in one sentence without naming technology?
 2. Is there one hard part worth discussing in an interview?
 3. Can the result be proven with numbers within the available time?
-Any "no" -> revise the idea before writing the blueprint.
+Any "no" -> revise the idea before writing the blueprint. If the mechanism catalogue already has a better-fitting row, use it instead of revising.

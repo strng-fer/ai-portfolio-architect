@@ -1,0 +1,27 @@
+name: mobile
+label: Mobile
+domain: mobile
+summary: Apps where the hard part is offline state, sync conflicts, or a battery and size envelope.
+target_roles:
+  - mobile engineer
+  - android developer
+  - ios developer
+  - flutter developer
+metric_families:
+  - sync conflict rate
+  - cold start time
+  - app size
+  - battery per session
+  - offline completion rate
+forbidden_ideas:
+  - to-do list app
+  - weather app over one API
+  - chat clone
+  - calculator or timer
+arxiv: false
+default_mechanisms:
+  - conflict-resolution
+  - cache-invalidation
+  - partial-failure
+  - edge-quantization
+demo_rule: The demo must run a real device or emulator profile and report the measured envelope.

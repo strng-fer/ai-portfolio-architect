@@ -1,0 +1,27 @@
+name: frontend
+label: Frontend / Web
+domain: frontend
+summary: Interfaces where the hard part is perceived performance, state consistency, or accessibility.
+target_roles:
+  - frontend engineer
+  - web developer
+  - ui engineer
+  - full stack engineer
+metric_families:
+  - Largest Contentful Paint
+  - interaction latency
+  - bundle size
+  - accessibility violations
+  - state divergence count
+forbidden_ideas:
+  - landing page clone
+  - dashboard with hardcoded data
+  - component library with no consumer
+  - portfolio site
+arxiv: false
+default_mechanisms:
+  - cache-invalidation
+  - conflict-resolution
+  - partial-failure
+  - cost-attribution
+demo_rule: The demo must include a Lighthouse or axe run with before/after numbers.

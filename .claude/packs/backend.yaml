@@ -1,0 +1,33 @@
+name: backend
+label: Backend / Platform
+domain: backend
+summary: Services where correctness under concurrency, retries, and load is the whole problem.
+target_roles:
+  - backend engineer
+  - software engineer
+  - platform engineer
+  - api engineer
+  - site reliability engineer
+metric_families:
+  - p95 latency
+  - throughput
+  - error rate under fault
+  - duplicate rate
+  - queue depth
+  - recovery time
+forbidden_ideas:
+  - to-do app
+  - blog or CMS CRUD
+  - e-commerce catalog
+  - social media clone
+  - URL shortener with no load test
+  - thin wrapper around another API
+arxiv: false
+default_mechanisms:
+  - idempotency
+  - backpressure
+  - cache-invalidation
+  - multi-tenant-isolation
+  - partial-failure
+  - schema-drift
+demo_rule: The demo must include a fault-injection or load run whose numbers are in the README.

@@ -1,0 +1,28 @@
+name: mlops
+label: MLOps / ML Platform
+domain: mlops
+summary: Platforms where the hard part is proving a model is still good after deployment.
+target_roles:
+  - mlops engineer
+  - machine learning engineer
+  - ml platform engineer
+  - ai platform engineer
+metric_families:
+  - alert precision and recall
+  - detection latency
+  - rollback time
+  - drift score (PSI)
+  - training-to-serving skew
+forbidden_ideas:
+  - MLflow tutorial
+  - notebook-to-API wrapper
+  - model registry with no consumer
+  - dashboard with no alert path
+arxiv: true
+default_mechanisms:
+  - drift-detection
+  - eval-gate
+  - calibration
+  - reproducible-split
+  - cascade-routing
+demo_rule: The demo must trigger a real drift or regression and show the gate blocking the release.

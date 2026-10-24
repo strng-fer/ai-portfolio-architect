@@ -1,0 +1,29 @@
+name: cv
+label: Computer Vision
+domain: cv
+summary: Perception systems where the hard part is data quality, class imbalance, or an inference envelope.
+target_roles:
+  - computer vision engineer
+  - cv engineer
+  - perception engineer
+  - ai engineer
+metric_families:
+  - mAP
+  - per-class recall
+  - PR-AUC
+  - FPS on target hardware
+  - p95 inference latency
+  - model size
+forbidden_ideas:
+  - MNIST or CIFAR classifier
+  - face recognition on scraped photos
+  - object detection on COCO with no deployment path
+  - image filter app
+arxiv: true
+default_mechanisms:
+  - class-imbalance
+  - edge-quantization
+  - active-learning
+  - cascade-routing
+  - calibration
+demo_rule: The demo must run on the target hardware or an explicit stand-in, and report the measured envelope.

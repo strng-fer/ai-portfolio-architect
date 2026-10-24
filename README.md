@@ -19,6 +19,9 @@ Switch output language with `/lang en` or `/lang id`.
 | **Token-Lean** | Chat is status only, documents have word budgets, input goes through digest scripts. Rules: `.claude/skills/portfolio-architect/08-token-discipline.md` |
 | **Agent Prompt Pack** | `05_agent_prompts.md` holds a P0 context prompt + one prompt per milestone + a review prompt, ready for Cursor/[CC]/Codex |
 | **Proven, Not Asserted** | Every metric row needs a numeric Target, a named Instrument, and a Baseline. `tools/check_portfolio.py` blocks the PDF when a claim cannot be proven |
+| **Evidence, Not Claims** | `01b-skill-evidence.md` holds one row per skill with an artifact. Gaps are computed by `tools/skill_evidence.py`, not guessed from self-report |
+| **Mechanism, Not Feature** | Ideas are selected from `12-mechanism-catalogue.md` (24 hard mechanisms) by posting signals, novelty against `_history.json`, and hour budget. The top 3 become the 3 ideation options |
+| **Role Packs** | `.claude/packs/*.yaml` supply domain-specific metric families, banned idea shapes, and ArXiv policy. Same codebase, different job families (llm, cv, backend, data-eng, mlops, ml, frontend, mobile) |
 
 ## Workflow Architecture
 
@@ -89,7 +92,8 @@ ai-portfolio-architect/
 |   |-- settings.json                  # Bash permission whitelist
 |   |-- config/lang.md                 # Output language setting (single source of truth)
 |   |-- commands/                      # 10 slash commands
-|   `-- skills/portfolio-architect/    # 13 knowledge modules (SKILL + 00-11)
+|   `-- skills/portfolio-architect/    # 14 knowledge modules (SKILL + 00-12)
+|-- .claude/packs/                     # Role packs (llm, cv, backend, data-eng, mlops, ml, frontend, mobile)
 |-- .agents/skills/                    # 3 CLI miners (external data)
 |   |-- jobspy-search/search.py        # Job scraper entry point (multi-board)
 |   |-- jobspy-search/boards.py        # Direct scrapers: JobStreet (SEEK), Kalibrr
@@ -100,6 +104,9 @@ ai-portfolio-architect/
 |   |-- posting_guard.py               # Prompt injection filter for job ads
 |   |-- job_digest.py                  # Token-lean job summary (replaces raw JSON reads)
 |   |-- ref_digest.py                  # Token-lean repo/paper summary (ranked by relevance)
+|   |-- skill_evidence.py              # Validate the evidence ledger, compute gap vs a posting
+|   |-- mechanism_pick.py              # Rank build mechanisms for posting signals + history
+|   |-- pack_load.py                   # Load and validate a role pack
 |   |-- check_portfolio.py             # Validation gate: budgets, sections, provable metrics
 |   |-- prompt_contract.py             # Extract the executable contract (commands + metrics)
 |   |-- scaffold_repo.py               # Generate a starter repo matching that contract
@@ -224,8 +231,8 @@ Each `portfolios/<company>_<role>/` folder contains:
 
 | File | Required content | Budget |
 |---|---|---|
-| `00_job_analysis.md` | Responsibilities/requirements breakdown, business problem, skill-vs-need table | 450 words |
-| `01_project_ideation.md` | 3 options: (1) primary recommendation, (2) infrastructure focus, (3) AI/data focus + non-goals | 550 words |
+| `00_job_analysis.md` | Responsibilities/requirements breakdown, business problem, skill-vs-need table. Gap rows cite the evidence ledger | 450 words |
+| `01_project_ideation.md` | 3 mechanisms from `mechanism_pick.py` ranked by signal fit, novelty, and budget, + choice + non-goals | 550 words |
 | `02_system_blueprint.md` | Per `05-blueprint-templates.md`: problem, design alternatives, concept architecture (embedded PNG), stack, data & interface concepts, key theory, challenges, metrics, workflow, CV bullets. **No implementation detail** | 1500 words |
 | `03_references_study.md` | 3 GitHub repos + 2 ArXiv papers with the part worth studying (1-2 lines each) | 400 words |
 | `04_review_report.md` | Quality gate: max 12 findings table, evidence per gate line, `check_portfolio.py` result | 350 words |
@@ -251,6 +258,50 @@ Each `portfolios/<company>_<role>/` folder contains:
 4. No HTML tags (`<br/>`) inside `sequenceDiagram`
 
 ---
+
+## Personalisation: three inputs
+
+Two candidates scoring the same posting get different ideas only when these differ. The pipeline enforces all three.
+
+| Input | File | Tool | What it decides |
+|---|---|---|---|
+| **Evidence** | `.claude/skills/portfolio-architect/01b-skill-evidence.md` | `tools/skill_evidence.py` | Which stack is reused, which is learned |
+| **History** | `portfolios/_history.json` | `tools/mechanism_pick.py` | Which mechanism is novel, which deepens |
+| **Pack** | `.claude/config/pack.md` + `.claude/packs/*.yaml` | `tools/pack_load.py` | Which metrics are legitimate, which ideas are banned |
+
+### Evidence ledger
+
+One row per skill. A level above `none` requires an artifact and a `last_used` month, otherwise the row is honest but unproven.
+
+```bash
+python tools/skill_evidence.py check              # validate the table
+python tools/skill_evidence.py check --strict      # unproven rows block
+python tools/skill_evidence.py gap --needs "python,fastapi,qdrant"
+```
+
+Gap verdicts: `solid` (reuse as-is), `thin` (prove it publicly), `missing` (new-technology axis). More than 2 `missing` skills means the posting is out of reach: the tool says so and the score should drop.
+
+### Mechanism catalogue
+
+24 hard mechanisms (`span-grounding`, `cascade-routing`, `idempotency`, `drift-detection`, ...) with posting signals, build cost (`S`/`M`/`L`), and metric family. Selection scores signal fit, penalises mechanisms already built, and rewards ones that fit the hour budget.
+
+```bash
+python tools/mechanism_pick.py list
+python tools/mechanism_pick.py --signals "audit,extraction,ocr" --hours 34 --domain llm
+python tools/mechanism_pick.py record --slug my_project --mechanism span-grounding --hours 34
+```
+
+### Role packs
+
+Same codebase, different job families. A pack supplies metric families, `forbidden_ideas`, default mechanisms, and whether ArXiv is a useful reference source.
+
+```bash
+python tools/pack_load.py --list
+python tools/pack_load.py --for-role "AI Engineer"
+python tools/pack_load.py --name backend
+```
+
+Available: `llm`, `cv`, `backend`, `data-eng`, `mlops`, `ml`, `frontend`, `mobile`. `/setup` picks one from the target role; the `Active pack:` line in `.claude/config/pack.md` is the source of truth.
 
 ## Engine Details (Data, Scraper, Limits)
 
@@ -359,6 +410,9 @@ Both digest tools fail loudly: `job_digest` exits 1 on a missing/corrupt cache, 
 - **Compile PDF:** `tools/compile_pdf.py <portfolio_folder>` - merges `00...05 .md` (fails if none exist), appends a visual diagram appendix when the blueprint does not embed images, then renders via `md-to-pdf` (`PUPPETEER_EXECUTABLE_PATH` auto-detected from Chrome/Edge). An old PDF is deleted first so a stale render can never pass.
 - **Verify PDF:** `tools/verify_pdf.py <pdf> [--min-pages N]` - checks the file exists, is >= 5 KB, has the expected page count, contains every source document heading, and has no broken image reference.
 - **Check portfolio:** `tools/check_portfolio.py <folder> [--strict]` - the validation gate. Enforces per-file word budgets, required blueprint sections, no code blocks over 5 lines, metric rows with a numeric target + named instrument + real baseline, evidence-bearing review gate lines, and runnable "Done when" commands. Exit 1 blocks the PDF.
+- **Skill evidence:** `tools/skill_evidence.py check [--strict]` validates the ledger; `gap --needs "a,b,c"` prints a per-requirement verdict (`solid` / `thin` / `missing`) and exits 1 when more than 2 skills are missing.
+- **Mechanism pick:** `tools/mechanism_pick.py --signals "..." --hours N [--domain X]` ranks catalogue mechanisms by signal fit, novelty against `_history.json`, and cost fit. `record` appends the chosen mechanism. `list` shows what is already built.
+- **Role pack:** `tools/pack_load.py --list | --name X | --for-role "..."` loads the domain rules: metric families, `forbidden_ideas`, default mechanisms, and ArXiv policy.
 - **Prompt contract:** `tools/prompt_contract.py <folder> [--json]` - extracts every `Done when` command and every metric instrument so they can be turned into real files instead of staying prose.
 - **Scaffold repo:** `tools/scaffold_repo.py <folder> [--dry-run] [--force]` - writes `starter_repo/` where each milestone has a failing test that names its requirement, each metric has a benchmark script, and the `Makefile` already has every target the prompts reference. Tests fail on purpose until the milestone is implemented.
 - **Portfolio status:** `tools/portfolio_status.py [folder] [--json]` - reads the tracker plus artifacts on disk and reports BLUEPRINT_READY, MARKDOWN_ONLY, INCOMPLETE, UNTRACKED, STALE_STATUS, or NEEDS_REVIEW with the next action. Exit 1 when any selected portfolio is not ready.

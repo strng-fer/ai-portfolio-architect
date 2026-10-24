@@ -19,6 +19,9 @@ Ganti bahasa output dengan `/lang en` atau `/lang id`.
 | **Hemat Token** | Chat hanya status, dokumen berbatas kata, input via digest script. Aturan: `.claude/skills/portfolio-architect/08-token-discipline.md` |
 | **Agent Prompt Pack** | `05_agent_prompts.md` berisi P0 konteks + 1 prompt per milestone + prompt review, siap dieksekusi Cursor/[CC]/Codex |
 | **Terbukti, Bukan Klaim** | Setiap baris metrik wajib punya Target angka, Instrument yang dinamai, dan Baseline. `tools/check_portfolio.py` memblokir PDF bila klaim tidak bisa dibuktikan |
+| **Bukti, Bukan Klaim Skill** | `01b-skill-evidence.md` menyimpan satu baris per skill dengan artefaknya. Gap dihitung `tools/skill_evidence.py`, bukan ditebak dari self-report |
+| **Mekanisme, Bukan Fitur** | Ide dipilih dari `12-mechanism-catalogue.md` (24 mekanisme keras) berdasarkan sinyal loker, kebaruan terhadap `_history.json`, dan budget jam. 3 teratas menjadi 3 opsi ide |
+| **Role Pack** | `.claude/packs/*.yaml` menyediakan famili metrik, ide terlarang, dan kebijakan ArXiv per domain. Satu codebase, banyak jenis posisi (llm, cv, backend, data-eng, mlops, ml, frontend, mobile) |
 
 ## Arsitektur Alur Kerja
 
@@ -88,7 +91,8 @@ ai-portfolio-architect/
 |   |-- settings.json                  # Whitelist permission Bash
 |   |-- config/lang.md                 # Setelan bahasa output (satu-satunya sumber)
 |   |-- commands/                      # 10 slash command
-|   `-- skills/portfolio-architect/    # 13 modul pengetahuan (SKILL + 00-11)
+|   `-- skills/portfolio-architect/    # 14 modul pengetahuan (SKILL + 00-12)
+|-- .claude/packs/                     # Role pack (llm, cv, backend, data-eng, mlops, ml, frontend, mobile)
 |-- .agents/skills/                    # 3 CLI miner (data eksternal)
 |   |-- jobspy-search/search.py        # Scraper lowongan (multi-board)
 |   |-- jobspy-search/boards.py        # Scraper langsung: JobStreet (SEEK), Kalibrr
@@ -99,6 +103,9 @@ ai-portfolio-architect/
 |   |-- posting_guard.py               # Filter prompt injection iklan lowongan
 |   |-- job_digest.py                  # Ringkasan loker hemat token
 |   |-- ref_digest.py                  # Ringkasan repo/paper hemat token (urut relevansi)
+|   |-- skill_evidence.py              # Validasi ledger bukti skill, hitung gap vs loker
+|   |-- mechanism_pick.py              # Ranking mekanisme untuk sinyal loker + riwayat
+|   |-- pack_load.py                   # Muat dan validasi role pack
 |   |-- check_portfolio.py             # Gerbang validasi: budget, bab, metrik terbukti
 |   |-- prompt_contract.py             # Ekstrak kontrak eksekusi (perintah + metrik)
 |   |-- scaffold_repo.py               # Buat starter repo sesuai kontrak itu
@@ -213,8 +220,8 @@ python .agents/skills/jobspy-search/search.py --query "AI Engineer" --location I
 
 | File | Isi wajib | Batas |
 |---|---|---|
-| `00_job_analysis.md` | Bedah responsibilities/requirements, masalah bisnis, tabel skill vs kebutuhan | 450 kata |
-| `01_project_ideation.md` | 3 opsi + pilihan + non-goals | 550 kata |
+| `00_job_analysis.md` | Bedah responsibilities/requirements, masalah bisnis, tabel skill vs kebutuhan. Baris gap mengutip ledger bukti | 450 kata |
+| `01_project_ideation.md` | 3 mekanisme hasil `mechanism_pick.py` (diurut sinyal, kebaruan, budget) + pilihan + non-goals | 550 kata |
 | `02_system_blueprint.md` | Masalah, alternatif desain, konsep arsitektur (embed PNG), stack, konsep data & antarmuka, teori kunci, tantangan, metrik, workflow, bullet CV. **Tanpa detail implementasi** | 1500 kata |
 | `03_references_study.md` | 3 repo GitHub + 2 paper ArXiv + bagian yang dipelajari | 400 kata |
 | `04_review_report.md` | Quality gate: maks 12 temuan, tiap gate berisi bukti, hasil `check_portfolio.py` | 350 kata |
@@ -239,6 +246,50 @@ python .agents/skills/jobspy-search/search.py --query "AI Engineer" --location I
 4. Tanpa tag HTML (`<br/>`) di `sequenceDiagram`
 
 ---
+
+## Personalisasi: tiga input
+
+Dua kandidat yang menilai loker sama hanya menghasilkan ide berbeda bila ketiganya berbeda. Pipeline mewajibkan semuanya.
+
+| Input | File | Tool | Yang ditentukan |
+|---|---|---|---|
+| **Bukti** | `.claude/skills/portfolio-architect/01b-skill-evidence.md` | `tools/skill_evidence.py` | Stack mana yang dipakai ulang, mana yang dipelajari |
+| **Riwayat** | `portfolios/_history.json` | `tools/mechanism_pick.py` | Mekanisme mana yang baru, mana yang memperdalam |
+| **Pack** | `.claude/config/pack.md` + `.claude/packs/*.yaml` | `tools/pack_load.py` | Metrik mana yang sah, ide mana yang dilarang |
+
+### Ledger bukti
+
+Satu baris per skill. Level di atas `none` wajib punya artefak dan bulan `last_used`; tanpa itu barisnya jujur tapi belum terbukti.
+
+```bash
+python tools/skill_evidence.py check              # validasi tabel
+python tools/skill_evidence.py check --strict      # baris belum terbukti memblokir
+python tools/skill_evidence.py gap --needs "python,fastapi,qdrant"
+```
+
+Verdict gap: `solid` (pakai langsung), `thin` (buktikan sekali secara publik), `missing` (poros teknologi baru). Lebih dari 2 skill `missing` berarti loker di luar jangkauan: tool mengatakannya dan skor harus turun.
+
+### Katalog mekanisme
+
+24 mekanisme keras (`span-grounding`, `cascade-routing`, `idempotency`, `drift-detection`, ...) lengkap dengan sinyal loker, biaya bangun (`S`/`M`/`L`), dan famili metrik. Pemilihan menilai kecocokan sinyal, memberi penalti mekanisme yang sudah dibangun, dan menghargai yang muat budget jam.
+
+```bash
+python tools/mechanism_pick.py list
+python tools/mechanism_pick.py --signals "audit,extraction,ocr" --hours 34 --domain llm
+python tools/mechanism_pick.py record --slug my_project --mechanism span-grounding --hours 34
+```
+
+### Role pack
+
+Satu codebase, banyak jenis posisi. Pack menyediakan famili metrik, `forbidden_ideas`, mekanisme default, dan apakah ArXiv relevan sebagai sumber referensi.
+
+```bash
+python tools/pack_load.py --list
+python tools/pack_load.py --for-role "AI Engineer"
+python tools/pack_load.py --name backend
+```
+
+Tersedia: `llm`, `cv`, `backend`, `data-eng`, `mlops`, `ml`, `frontend`, `mobile`. `/setup` memilih dari target role; baris `Active pack:` di `.claude/config/pack.md` adalah sumber kebenarannya.
 
 ## Engine Detail
 
@@ -341,6 +392,9 @@ Kedua digest gagal secara eksplisit: `job_digest` exit 1 bila cache hilang/korup
 - **Compile PDF:** `tools/compile_pdf.py <folder_portofolio>` menggabungkan `00...05 .md`, menambah lampiran diagram bila blueprint belum menyisipkan gambar, lalu render via `md-to-pdf` (`PUPPETEER_EXECUTABLE_PATH` dideteksi otomatis).
 - **Verify PDF:** `tools/verify_pdf.py <pdf> [--min-pages N]` memeriksa file ada, ukuran >= 5 KB, jumlah halaman, semua dokumen sumber masuk, dan tidak ada gambar yang rusak.
 - **Check portfolio:** `tools/check_portfolio.py <folder> [--strict]` gerbang validasi: budget kata per file, bab wajib, larangan blok kode, baris metrik dengan target angka + instrument + baseline, gate review berbukti, dan perintah "Done when" yang bisa dijalankan. Exit 1 memblokir PDF.
+- **Bukti skill:** `tools/skill_evidence.py check [--strict]` memvalidasi ledger; `gap --needs "a,b,c"` mencetak verdict per requirement (`solid` / `thin` / `missing`) dan exit 1 bila skill `missing` lebih dari 2.
+- **Pilih mekanisme:** `tools/mechanism_pick.py --signals "..." --hours N [--domain X]` meranking mekanisme katalog berdasarkan kecocokan sinyal, kebaruan terhadap `_history.json`, dan kecocokan biaya. `record` mencatat mekanisme terpilih. `list` menampilkan yang sudah dibangun.
+- **Role pack:** `tools/pack_load.py --list | --name X | --for-role "..."` memuat aturan domain: famili metrik, `forbidden_ideas`, mekanisme default, dan kebijakan ArXiv.
 - **Prompt contract:** `tools/prompt_contract.py <folder>` mengekstrak setiap perintah "Done when" dan setiap instrument metrik agar bisa diubah menjadi file nyata, bukan sekadar prosa.
 - **Scaffold repo:** `tools/scaffold_repo.py <folder> [--dry-run] [--force]` menulis `starter_repo/` dengan satu test gagal per milestone (namanya menyebut requirement-nya), satu skrip benchmark per metrik, dan `Makefile` yang sudah memuat semua target yang dirujuk prompt. Test sengaja gagal sampai milestone dikerjakan.
 - **Portfolio status:** `tools/portfolio_status.py [folder] [--json]` membaca tracker + artefak di disk dan melaporkan BLUEPRINT_READY, MARKDOWN_ONLY, INCOMPLETE, UNTRACKED, STALE_STATUS, atau NEEDS_REVIEW beserta aksi berikutnya.

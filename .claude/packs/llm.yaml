@@ -1,0 +1,32 @@
+name: llm
+label: LLM / Applied AI
+domain: llm
+summary: Systems where a language model is untrusted and must be grounded, bounded, or evaluated.
+target_roles:
+  - ai engineer
+  - llm engineer
+  - generative ai engineer
+  - applied scientist
+  - ml engineer
+metric_families:
+  - citation validity
+  - hallucination rate
+  - field accuracy
+  - recall@k
+  - cost per request
+  - p95 latency
+forbidden_ideas:
+  - chatbot over a PDF
+  - prompt playground
+  - fine-tuning a base model with no eval set
+  - thin wrapper around a provider SDK
+  - RAG demo with no retrieval metric
+arxiv: true
+default_mechanisms:
+  - span-grounding
+  - retrieval-fusion
+  - eval-gate
+  - bounded-agent-loop
+  - prompt-injection-guard
+  - cost-attribution
+demo_rule: The demo must show the failure mode, not the happy path. Show a rejected ungrounded answer.

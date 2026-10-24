@@ -1,0 +1,28 @@
+name: data-eng
+label: Data Engineering
+domain: data
+summary: Pipelines where the hard part is idempotent reprocessing, freshness, or schema change.
+target_roles:
+  - data engineer
+  - analytics engineer
+  - platform data engineer
+  - etl developer
+metric_families:
+  - duplicate rows
+  - freshness lag
+  - backfill cost
+  - completeness
+  - schema-change detection latency
+forbidden_ideas:
+  - CSV-to-dashboard toy pipeline
+  - scraping a site into a table
+  - warehouse with no lineage
+  - one-off notebook promoted to production
+arxiv: false
+default_mechanisms:
+  - exactly-once-sink
+  - schema-drift
+  - backpressure
+  - reproducible-split
+  - audit-trail
+demo_rule: The demo must show a re-run producing no duplicates, and a schema change being caught.

@@ -1,0 +1,28 @@
+name: ml
+label: Machine Learning (classical / tabular)
+domain: ml
+summary: Models where the hard part is leakage, imbalance, calibration, or reproducibility rather than depth.
+target_roles:
+  - data scientist
+  - machine learning engineer
+  - research engineer
+  - applied scientist
+metric_families:
+  - per-class recall
+  - PR-AUC
+  - calibration error
+  - training-to-serving skew
+  - reproducibility hash
+forbidden_ideas:
+  - Titanic or Iris notebook
+  - Kaggle submission with no serving path
+  - churn model with no decision threshold
+  - AutoML run with no baseline
+arxiv: true
+default_mechanisms:
+  - class-imbalance
+  - calibration
+  - reproducible-split
+  - drift-detection
+  - active-learning
+demo_rule: The demo must show the model making a decision at a chosen threshold, with the cost of that threshold.
