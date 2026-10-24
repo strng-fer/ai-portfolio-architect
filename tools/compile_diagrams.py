@@ -63,6 +63,9 @@ def main():
     all_ok = True
     for mmd in mmd_files:
         out_png = mmd.with_suffix(".png")
+        # Invalidate the previous render so a stale PNG can never pass as fresh.
+        if out_png.exists():
+            out_png.unlink()
         print(f"[*] Rendering {mmd.name} -> {out_png.name}...")
         if not render_with_mmdc(mmd, out_png):
             print("[*] Trying Kroki fallback render...")
@@ -70,7 +73,11 @@ def main():
                 print(f"[X] Failed to render {mmd.name}. Check the Mermaid syntax!")
                 all_ok = False
                 continue
-        print(f"[+] Created {out_png}")
+        if out_png.stat().st_mtime < mmd.stat().st_mtime:
+            print(f"[X] {out_png.name} is older than {mmd.name}; render is stale.")
+            all_ok = False
+            continue
+        print(f"[+] Created {out_png} ({out_png.stat().st_size // 1024} KB)")
 
     if not all_ok:
         sys.exit(1)

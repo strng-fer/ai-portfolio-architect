@@ -2,7 +2,6 @@
 
 Every file uses tables and bullets. No opening prose. No repeated conclusions.
 Depth rule and word budgets come from `08-token-discipline.md`: concept only, no DDL, no payloads, no code blocks, no folder trees.
-Write every generated document, table heading, diagram label, and chat status line in the language from `.claude/config/lang.md` (English default).
 
 ## `00_job_analysis.md` - max 450 words
 1. `## Posting Summary` - company, role, level, 3 lines of business context.
@@ -20,11 +19,23 @@ Table of 3 options: Option | Idea (one sentence) | Problem absorbed | New techno
 Repo table: Name | Why relevant | Part to study (one line). Max 3.
 Paper table: Title | Idea adopted | Part to study. Max 2.
 URLs must come from `github_refs.json` / `arxiv_refs.json`. Never invent a URL.
+If `ref_digest.py` exits 1 (not enough references), say so in one line instead of padding with popular-but-irrelevant repos.
 
 ## `04_review_report.md` - max 350 words
 Findings table: # | Area | Problem | Severity | Fix. Max 12 rows.
-Quality gate (yes/no, one line each): anti-CRUD, realistic within constraints, measurable metrics, diagrams rendered, non-goals explicit, word budgets met.
+Quality gate - one line per criterion, and **each line must carry evidence**, not a bare yes/no:
+
+```
+- Anti-CRUD: yes - `02_system_blueprint.md` section 8 is built around span verification, not a list view.
+- Realistic in time: yes - 24h total vs 32h ceiling in `02-constraints-profile.md`.
+- Metrics provable: yes - 2 metrics, both with an instrument and a baseline in section 9.
+- Diagrams rendered: yes - `diagrams/system_architecture.png` 51 KB, `user_workflow.png` 57 KB.
+- Word budgets: yes - 00=420, 01=530, 02=1480, 03=390, 04=340, 05=880.
+- `check_portfolio.py`: pass - 0 errors, 1 warning (appendix image).
+```
+
 `## Verdict` - one line (PASS / PATCH) + max 3 bullets of changes applied.
 
 ## Review application rule
 Minimal diff in failing sections only. Never rewrite a file that already passed.
+A gate line with `no` forces a PATCH verdict.

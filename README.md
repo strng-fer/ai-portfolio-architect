@@ -18,6 +18,7 @@ Switch output language with `/lang en` or `/lang id`.
 | **Concept, Not Code** | Blueprints carry ideas, design, theory, problems, solutions, metrics, and workflow. Implementation detail goes to `05_agent_prompts.md` or `/scaffold` |
 | **Token-Lean** | Chat is status only, documents have word budgets, input goes through digest scripts. Rules: `.claude/skills/portfolio-architect/08-token-discipline.md` |
 | **Agent Prompt Pack** | `05_agent_prompts.md` holds a P0 context prompt + one prompt per milestone + a review prompt, ready for Cursor/[CC]/Codex |
+| **Proven, Not Asserted** | Every metric row needs a numeric Target, a named Instrument, and a Baseline. `tools/check_portfolio.py` blocks the PDF when a claim cannot be proven |
 
 ## Workflow Architecture
 
@@ -56,6 +57,9 @@ documents/ (CV, LinkedIn, transcripts)
         `-- diagrams/
               |-- *.mmd                (Mermaid source)
               `-- *.png                (rendered by compile_diagrams.py)
+        |
+        v
+  tools/check_portfolio.py  <-- validation gate: budgets, sections, provable metrics
         |
         v
   tools/compile_pdf.py --> Blueprint_Final.md --> Blueprint_Final.pdf
@@ -215,8 +219,8 @@ Each `portfolios/<company>_<role>/` folder contains:
 | `01_project_ideation.md` | 3 options: (1) primary recommendation, (2) infrastructure focus, (3) AI/data focus + non-goals | 550 words |
 | `02_system_blueprint.md` | Per `05-blueprint-templates.md`: problem, design alternatives, concept architecture (embedded PNG), stack, data & interface concepts, key theory, challenges, metrics, workflow, CV bullets. **No implementation detail** | 1500 words |
 | `03_references_study.md` | 3 GitHub repos + 2 ArXiv papers with the part worth studying (1-2 lines each) | 400 words |
-| `04_review_report.md` | Quality gate: max 12 findings table + verdict | 350 words |
-| `05_agent_prompts.md` | (optional) Agent prompt pack: P0 context + one prompt per milestone + review prompt | 900 words |
+| `04_review_report.md` | Quality gate: max 12 findings table, evidence per gate line, `check_portfolio.py` result | 350 words |
+| `05_agent_prompts.md` | (optional) Agent prompt pack: P0 context + one prompt per milestone (runnable "Done when") + review prompt | 900 words |
 | `diagrams/*.mmd` | Mermaid source (`flowchart` for `system_architecture`, `sequenceDiagram` for `user_workflow`) | max 15 nodes |
 | `diagrams/*.png` | Rendered automatically from `.mmd` | - |
 | `Blueprint_Final.md` | Combined document (auto-generated, includes 04 & 05) | - |
@@ -278,9 +282,9 @@ Lines matching these patterns are dropped:
 |---|---|---|
 | `tools/job_digest.py list --top 10` | One line per job: id, company, role, location, score, detected stack | ~10 lines |
 | `tools/job_digest.py detail <id>` | One job's detail, description cut at 1800 chars (`--full` for the whole text) | ~15 lines |
-| `tools/ref_digest.py --repo 3 --paper 2` | Repos by stars + ArXiv papers | ~12 lines |
+| `tools/ref_digest.py --repo 3 --paper 2 --query "<keywords>"` | Repos ranked by query relevance then stars + ArXiv papers | ~12 lines |
 
-Without the digests, the agent reads 20-100 KB of raw JSON per call. With them, a few KB.
+Both digest tools fail loudly: `job_digest` exits 1 on a missing/corrupt cache, `ref_digest` exits 1 when there are fewer than `--min` repos or `--min-paper` papers, so the agent cannot silently cite nothing. Without the digests, the agent reads 20-100 KB of raw JSON per call. With them, a few KB.
 
 ---
 
@@ -305,8 +309,9 @@ Without the digests, the agent reads 20-100 KB of raw JSON per call. With them, 
 ## View Layer Detail
 
 - **Compile diagrams:** `tools/compile_diagrams.py <diagrams_folder>` - renders every `.mmd` to `.png`, in priority order: (1) `npx mermaid-cli` + puppeteer config pointing at installed Chrome/Edge; (2) Kroki API fallback; (3) exit 1 if both fail.
-- **Compile PDF:** `tools/compile_pdf.py <portfolio_folder>` - merges `00...05 .md`, appends a visual diagram appendix when the blueprint does not embed images, then renders via `md-to-pdf` (`PUPPETEER_EXECUTABLE_PATH` auto-detected from Chrome/Edge).
-- **Verify PDF:** `tools/verify_pdf.py <pdf>` - checks the file exists and is >= 5 KB.
+- **Compile PDF:** `tools/compile_pdf.py <portfolio_folder>` - merges `00...05 .md` (fails if none exist), appends a visual diagram appendix when the blueprint does not embed images, then renders via `md-to-pdf` (`PUPPETEER_EXECUTABLE_PATH` auto-detected from Chrome/Edge). An old PDF is deleted first so a stale render can never pass.
+- **Verify PDF:** `tools/verify_pdf.py <pdf> [--min-pages N]` - checks the file exists, is >= 5 KB, has the expected page count, contains every source document heading, and has no broken image reference.
+- **Check portfolio:** `tools/check_portfolio.py <folder> [--strict]` - the validation gate. Enforces per-file word budgets, required blueprint sections, no code blocks over 5 lines, metric rows with a numeric target + named instrument + real baseline, evidence-bearing review gate lines, and runnable "Done when" commands. Exit 1 blocks the PDF.
 
 ## Practical Tips
 

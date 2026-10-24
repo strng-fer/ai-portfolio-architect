@@ -18,6 +18,7 @@ Ganti bahasa output dengan `/lang en` atau `/lang id`.
 | **Konsep, Bukan Kode** | Blueprint memuat ide, desain, teori, masalah, solusi, metrik, workflow. Detail implementasi pindah ke `05_agent_prompts.md` atau `/scaffold` |
 | **Hemat Token** | Chat hanya status, dokumen berbatas kata, input via digest script. Aturan: `.claude/skills/portfolio-architect/08-token-discipline.md` |
 | **Agent Prompt Pack** | `05_agent_prompts.md` berisi P0 konteks + 1 prompt per milestone + prompt review, siap dieksekusi Cursor/[CC]/Codex |
+| **Terbukti, Bukan Klaim** | Setiap baris metrik wajib punya Target angka, Instrument yang dinamai, dan Baseline. `tools/check_portfolio.py` memblokir PDF bila klaim tidak bisa dibuktikan |
 
 ## Arsitektur Alur Kerja
 
@@ -56,6 +57,9 @@ documents/ (CV, LinkedIn, transkrip)
         `-- diagrams/
               |-- *.mmd                (Mermaid source)
               `-- *.png                (hasil compile_diagrams.py)
+        |
+        v
+  tools/check_portfolio.py  <-- gerbang validasi: budget, bab wajib, metrik terbukti
         |
         v
   tools/compile_pdf.py --> Blueprint_Final.md --> Blueprint_Final.pdf
@@ -204,8 +208,8 @@ python .agents/skills/jobspy-search/search.py --query "backend engineer jakarta"
 | `01_project_ideation.md` | 3 opsi + pilihan + non-goals | 550 kata |
 | `02_system_blueprint.md` | Masalah, alternatif desain, konsep arsitektur (embed PNG), stack, konsep data & antarmuka, teori kunci, tantangan, metrik, workflow, bullet CV. **Tanpa detail implementasi** | 1500 kata |
 | `03_references_study.md` | 3 repo GitHub + 2 paper ArXiv + bagian yang dipelajari | 400 kata |
-| `04_review_report.md` | Quality gate: maks 12 temuan + verdict | 350 kata |
-| `05_agent_prompts.md` | (opsional) P0 konteks + 1 prompt per milestone + prompt review | 900 kata |
+| `04_review_report.md` | Quality gate: maks 12 temuan, tiap gate berisi bukti, hasil `check_portfolio.py` | 350 kata |
+| `05_agent_prompts.md` | (opsional) P0 konteks + 1 prompt per milestone (dengan "Done when" yang bisa dijalankan) + prompt review | 900 kata |
 | `diagrams/*.mmd` | `flowchart` arsitektur, `sequenceDiagram` workflow | maks 15 node |
 | `diagrams/*.png` | Hasil render otomatis | - |
 | `Blueprint_Final.md` / `.pdf` | Dokumen gabungan (00-05) | - |
@@ -260,9 +264,9 @@ Baris berpola berikut dibuang: `ignore (all) previous/prior instructions`, `syst
 |---|---|---|
 | `tools/job_digest.py list --top 10` | 1 baris per loker: id, perusahaan, posisi, lokasi, skor, stack | sekitar 10 baris |
 | `tools/job_digest.py detail <id>` | Detail 1 loker, deskripsi dipotong 1800 karakter (`--full` untuk utuh) | sekitar 15 baris |
-| `tools/ref_digest.py --repo 3 --paper 2` | Repo urut bintang + paper ArXiv | sekitar 12 baris |
+| `tools/ref_digest.py --repo 3 --paper 2 --query "<kata kunci>"` | Repo urut relevansi lalu bintang + paper ArXiv | sekitar 12 baris |
 
-Tanpa digest, agent membaca 20-100 KB JSON mentah per panggilan.
+Kedua digest gagal secara eksplisit: `job_digest` exit 1 bila cache hilang/korup, `ref_digest` exit 1 bila repo < `--min` atau paper < `--min-paper`, sehingga agent tidak bisa diam-diam mengutip kosong. Tanpa digest, agent membaca 20-100 KB JSON mentah per panggilan.
 
 ---
 
@@ -288,7 +292,8 @@ Tanpa digest, agent membaca 20-100 KB JSON mentah per panggilan.
 
 - **Compile diagram:** `tools/compile_diagrams.py <folder_diagrams>` merender semua `.mmd` jadi `.png`, prioritas: (1) `npx mermaid-cli` + puppeteer config ke Chrome/Edge terinstal; (2) fallback Kroki API; (3) exit 1 bila keduanya gagal.
 - **Compile PDF:** `tools/compile_pdf.py <folder_portofolio>` menggabungkan `00...05 .md`, menambah lampiran diagram bila blueprint belum menyisipkan gambar, lalu render via `md-to-pdf` (`PUPPETEER_EXECUTABLE_PATH` dideteksi otomatis).
-- **Verify PDF:** `tools/verify_pdf.py <pdf>` memeriksa file ada dan ukuran >= 5 KB.
+- **Verify PDF:** `tools/verify_pdf.py <pdf> [--min-pages N]` memeriksa file ada, ukuran >= 5 KB, jumlah halaman, semua dokumen sumber masuk, dan tidak ada gambar yang rusak.
+- **Check portfolio:** `tools/check_portfolio.py <folder> [--strict]` gerbang validasi: budget kata per file, bab wajib, larangan blok kode, baris metrik dengan target angka + instrument + baseline, gate review berbukti, dan perintah "Done when" yang bisa dijalankan. Exit 1 memblokir PDF.
 
 ## Tips Praktis
 

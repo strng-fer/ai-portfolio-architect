@@ -31,7 +31,7 @@ Word ceilings per file. Hard limits, not suggestions.
 | `02_system_blueprint.md` | 1500 | concept architecture, data, metrics, workflow |
 | `03_references_study.md` | 400 | 3 repos + 2 papers, 1-2 lines each |
 | `04_review_report.md` | 350 | max 12 findings, table format |
-| `05_agent_prompts.md` | 900 | 1 context prompt + 1 per milestone + 1 review prompt |
+| `05_agent_prompts.md` | 900 | 1 context prompt + 1 per milestone + 1 review prompt, each with a runnable "Done when" |
 
 Additional rules:
 - No duplication across files. State a fact once, where it matters most.
@@ -66,6 +66,7 @@ The reviewer may only change sections that failed the quality gate. Never rewrit
 
 ## 6. Tool execution
 - One call per step, once per phase. Do not re-run a tool just to display its output again.
+- Always run `python3 tools/check_portfolio.py <folder>` before rendering. It enforces budgets, required sections, and provable metrics. Exit code 1 blocks the PDF.
 - Never open or read a finished PDF or PNG. Trust `verify_pdf.py`.
 - Quote at most the last 5 lines of an error log.
 

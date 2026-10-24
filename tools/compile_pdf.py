@@ -38,6 +38,10 @@ def main():
         if fpath.exists():
             combined_parts.append(fpath.read_text(encoding="utf-8"))
 
+    if not combined_parts:
+        print(f"[X] No blueprint markdown found in {target_dir} (expected 00_job_analysis.md ... 05_agent_prompts.md)")
+        sys.exit(1)
+
     # Pastikan diagram terlampir jika belum di-embed di dalam 02_system_blueprint.md
     combined_text = "\n\n---\n\n".join(combined_parts)
     if "diagrams/system_architecture.png" not in combined_text and (target_dir / "diagrams/system_architecture.png").exists():
@@ -52,6 +56,8 @@ def main():
     print(f"[+] Combined document written to {full_md}")
 
     out_pdf = target_dir / "Blueprint_Final.pdf"
+    if out_pdf.exists():
+        out_pdf.unlink()  # never let a stale PDF pass as the new render
     print("[*] Converting to PDF with md-to-pdf...")
     npx = shutil.which("npx") or shutil.which("npx.cmd") or "npx"
     cmd = [npx, "--yes", "md-to-pdf", str(full_md)]
