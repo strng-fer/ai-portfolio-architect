@@ -8,6 +8,8 @@ Only boards with a verified public JSON endpoint live here. Boards that need a
 logged-in session or defeat plain HTTP (Glints, Jobindo) are intentionally absent;
 `search.py` reports them as unsupported instead of shipping a scraper that breaks.
 """
+import re
+
 import requests
 
 UA = (
@@ -37,6 +39,34 @@ def _record(title, company, location, url, description, source) -> dict | None:
         "description": _clean(description)[:4000],
         "source": source,
     }
+
+
+STOPWORDS = {
+    "the", "and", "for", "with", "job", "jobs", "kerja", "lowongan",
+    "of", "in", "at", "to", "is", "or", "on", "by", "an", "as",
+}
+
+
+def query_tokens(query: str) -> list[str]:
+    """Significant lowercase tokens from the search query.
+
+    Two-letter tokens are kept because domain terms like `ai` and `ml` carry the
+    whole meaning of a query such as "AI Engineer".
+    """
+    raw = re.findall(r"[a-z0-9]+", (query or "").lower())
+    return [t for t in raw if len(t) >= 2 and t not in STOPWORDS]
+
+
+def matches_query(record: dict, tokens: list[str]) -> bool:
+    """True when the posting plausibly concerns the query.
+
+    Needed because some boards fall back to their entire catalogue instead of
+    returning zero results, which would poison the ranking with unrelated jobs.
+    """
+    if not tokens:
+        return True
+    haystack = f"{record.get('title', '')} {record.get('description', '')}".lower()
+    return any(token in haystack for token in tokens)
 
 
 def search_jobstreet(query: str, location: str, limit: int) -> list[dict]:
@@ -78,7 +108,11 @@ def search_jobstreet(query: str, location: str, limit: int) -> list[dict]:
 
 
 def search_kalibrr(query: str, location: str, limit: int) -> list[dict]:
-    """Kalibrr public job-board API."""
+    """Kalibrr public job-board API.
+
+    Kalibrr falls back to its full catalogue when the query has no matches, so
+    every result is re-checked against the query before it is kept.
+    """
     params = {"limit": min(max(limit, 5), 50), "offset": 0, "text": query}
     if "indonesia" in (location or "").lower() or not location:
         params["country"] = "Indonesia"
@@ -90,6 +124,7 @@ def search_kalibrr(query: str, location: str, limit: int) -> list[dict]:
     )
     resp.raise_for_status()
     payload = resp.json()
+    tokens = query_tokens(query)
     out = []
     for job in payload.get("jobs") or []:
         gl = job.get("google_location") or {}
@@ -116,7 +151,7 @@ def search_kalibrr(query: str, location: str, limit: int) -> list[dict]:
             desc,
             "kalibrr",
         )
-        if rec:
+        if rec and matches_query(rec, tokens):
             out.append(rec)
     return out
 
