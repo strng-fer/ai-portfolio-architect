@@ -189,7 +189,7 @@ python .agents/skills/jobspy-search/search.py --query "backend engineer jakarta"
 2. /scrape "Backend Engineer" "Jakarta"
    -> tabel 10 baris:
      ID | Perusahaan | Posisi              | Skor | Ide
-     7  | Kredivo    | Backend Eng (Golang)| 82   | Distributed rate-limiter
+     7  | Tokopedia  | Backend Eng (Golang)| 82   | Distributed rate-limiter
 
 3. /applyidea 7 --prompts
    -> 4 fase, chat hanya status:
@@ -307,7 +307,7 @@ Kedua digest gagal secara eksplisit: `job_digest` exit 1 bila cache hilang/korup
 
 - `documents/` kosong, `/setup` menanyakan 5 poin profil.
 - Hapus cache tanpa menghapus profil: `/reset`. Reset profil + cache: `/reset all`.
-- Perusahaan spesifik: `/scrape "Backend Kredivo" "Jakarta"`.
+- Perusahaan spesifik: `/scrape "Backend Tokopedia" "Jakarta"`.
 - Batas waktu default 15 jam/pekan, 2-3 minggu. Ubah di `02-constraints-profile.md`.
 - Hemat token: jalankan `/applyidea <id> --prompts` sekali, lalu kerjakan milestone dengan agent lain memakai `05_agent_prompts.md`.
 - Blueprint sengaja konseptual. Butuh detail implementasi? Minta agent lain mengeksekusi prompt pack.

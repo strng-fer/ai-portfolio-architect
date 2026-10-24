@@ -196,8 +196,8 @@ All interaction goes through slash commands in [CC] / OpenCode:
 
 2. /scrape "Backend Engineer" "Jakarta"
    -> 10-row table, for example:
-     ID | Company | Role                | Score | Idea
-     7  | Kredivo | Backend Eng (Golang)| 82    | Distributed rate-limiter
+     ID | Company   | Role                | Score | Idea
+     7  | Tokopedia | Backend Eng (Golang)| 82    | Distributed rate-limiter
 
 3. /applyidea 7 --prompts
    -> 4 phases, chat shows status only:
@@ -326,7 +326,7 @@ Both digest tools fail loudly: `job_digest` exits 1 on a missing/corrupt cache, 
 - Empty `documents/` -> `/setup` asks 5 profile questions; no prepared CV needed.
 - Clear the scrape cache without touching the profile: `/reset` with no arguments.
 - Reset profile + cache: `/reset all`.
-- Target a specific company: add its name to the `/scrape` query, e.g. `/scrape "Backend Kredivo" "Jakarta"`.
+- Target a specific company: add its name to the `/scrape` query, e.g. `/scrape "Backend Tokopedia" "Jakarta"`.
 - 15 h/week and 2-3 weeks are the default constraint template; edit `.claude/skills/portfolio-architect/02-constraints-profile.md` any time.
 - Token saving: run `/applyidea <id> --prompts` once, then work the milestones with another agent using `05_agent_prompts.md`. Use `/scaffold` only when you need a starter repo.
 - Blueprints are intentionally conceptual. Need implementation detail? Have another agent execute the prompt pack instead of adding code sections to the blueprint.
