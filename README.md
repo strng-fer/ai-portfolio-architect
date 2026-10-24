@@ -33,7 +33,9 @@ documents/ (CV, LinkedIn, transcripts)
    /scrape "<role>" "<location>" --> .agents/skills/jobspy-search/search.py
         |                                   |
         v                                   v
-  job_scraper/latest_scrape.json <---- Indeed / LinkedIn / Glassdoor
+  job_scraper/latest_scrape.json <---- JobStreet / Kalibrr / Indeed / LinkedIn
+        |                              (+ glassdoor, zip_recruiter, bayt, naukri,
+        |                               bdjobs, hellowork, google via --sites)
         |
         v
       /rank ---------------> job_scraper/ranked_jobs.json
@@ -87,9 +89,10 @@ ai-portfolio-architect/
 |   |-- settings.json                  # Bash permission whitelist
 |   |-- config/lang.md                 # Output language setting (single source of truth)
 |   |-- commands/                      # 10 slash commands
-|   `-- skills/portfolio-architect/    # 12 knowledge modules (SKILL + 00-11)
+|   `-- skills/portfolio-architect/    # 13 knowledge modules (SKILL + 00-11)
 |-- .agents/skills/                    # 3 CLI miners (external data)
-|   |-- jobspy-search/search.py        # Job scraper (indeed/LinkedIn/glassdoor)
+|   |-- jobspy-search/search.py        # Job scraper entry point (multi-board)
+|   |-- jobspy-search/boards.py        # Direct scrapers: JobStreet (SEEK), Kalibrr
 |   |-- github-repo-miner/mine_github.py   # GitHub repo references
 |   `-- arxiv-paper-miner/mine_arxiv.py    # ArXiv paper references
 |-- tools/
@@ -129,7 +132,7 @@ ai-portfolio-architect/
 ### 1. Install Python dependencies
 
 ```bash
-pip install python-jobspy
+pip install python-jobspy requests
 ```
 
 ### 2. Install global Node packages (diagram + PDF rendering)
@@ -167,6 +170,7 @@ python tools/fetch_page.py "https://example.com"              # must exit 0
 python .agents/skills/github-repo-miner/mine_github.py --query "python" --limit 2
 python .agents/skills/arxiv-paper-miner/mine_arxiv.py --query "rag" --limit 2
 python .agents/skills/jobspy-search/search.py --query "backend engineer jakarta" --limit 5
+python .agents/skills/jobspy-search/search.py --query "AI Engineer" --location Indonesia --sites jobstreet,kalibrr --limit 5
 ```
 
 ---
@@ -178,7 +182,7 @@ All interaction goes through slash commands in [CC] / OpenCode:
 | Command | Function |
 |---|---|
 | `/setup` | Onboarding: read `documents/` or ask 5 questions. Writes the competency and constraint profiles |
-| `/scrape "<role>" "<location>"` | Scrape jobs -> compute Portfolio Leverage Score -> compact top 10 table |
+| `/scrape "<role>" "<location>"` | Scrape jobs across boards -> compute Portfolio Leverage Score -> compact top 10 table. Board set is configurable via `--sites`, LinkedIn proxies via `--proxies` |
 | `/rank` | Re-rank using the `04-gap-evaluation.md` rubric |
 | `/applyidea <URL or ID> [--prompts] [--no-pdf]` | Main flow: job analysis -> GitHub/ArXiv research -> 3 options -> conceptual blueprint -> diagrams -> PDF -> tracker. `--prompts` also writes the agent prompt pack |
 | `/prompt <portfolio_folder>` | Create or refresh `05_agent_prompts.md`: executable instructions for another agent |
@@ -254,18 +258,52 @@ Each `portfolios/<company>_<role>/` folder contains:
 
 | Source | Endpoint / Library | Output |
 |---|---|---|
-| Job postings | `python-jobspy` (indeed, LinkedIn, glassdoor*; jobstreet when the library supports it) | `job_scraper/latest_scrape.json` |
+| Job postings (native) | `python-jobspy` - indeed, linkedin, glassdoor, zip_recruiter, bayt, naukri, bdjobs, hellowork, google | `job_scraper/latest_scrape.json` |
+| Job postings (direct API) | JobStreet Indonesia (SEEK v5 JSON), Kalibrr public board API - see `boards.py` | `job_scraper/latest_scrape.json` |
 | GitHub repositories | GitHub Search API `api.github.com/search/repositories` | `job_scraper/github_refs.json` |
 | Scientific papers | ArXiv API `export.arxiv.org/api/query` | `job_scraper/arxiv_refs.json` |
 | Web pages | Jina Reader `r.jina.ai/<url>` -> direct GET fallback | stdout |
 
-> \* Glassdoor is **dropped automatically** when the location contains "indonesia"/"jakarta", because the country is unsupported.
+Every record carries a `source` field, so a ranking can be traced back to the board it came from.
 
-### `python-jobspy` 1.4.0 Limits (current release)
+### Job Boards
 
-- `jobstreet` is **not supported** on PyPI (valid sites: linkedin, indeed, zip_recruiter, glassdoor, google, bayt, naukri, bdjobs, hellowork).
-- The script reports new versions automatically if `python-jobspy` adds jobstreet support - no code edit needed.
-- For a custom JobStreet scraper, watch the upstream repo: https://github.com/cullenwatson/jobs-scraper
+Default set: `jobstreet,kalibrr,indeed,linkedin`. Override with `--sites`.
+
+| Board | Access | Status |
+|---|---|---|
+| `jobstreet` | Direct SEEK API (`id.jobstreet.com/api/jobsearch/v5`) | works, no auth |
+| `kalibrr` | Direct public API (`kalibrr.com/kjs/job_board/search`) | works, no auth |
+| `indeed`, `linkedin`, `glassdoor`, `zip_recruiter`, `bayt`, `naukri`, `bdjobs`, `hellowork` | `python-jobspy` | works; LinkedIn may return HTTP 429 on consumer IPs |
+| `google` | `python-jobspy` | currently returns no data (upstream scraper broken in 1.4.x) |
+| `jobindo` | none | skipped: JS app behind anti-bot, no public search API |
+| `glints` | none | skipped: search API requires a logged-in cookie token |
+
+Design points:
+
+- **Per-board isolation.** Each board runs in its own try block, so one 429 or timeout never kills the batch. Failures are listed at the end.
+- **Round-robin cap.** Results are interleaved by board before the `--limit * 3` cap, so the last board in the list is never truncated away.
+- **Relevance gate.** Kalibrr falls back to its full catalogue when a query matches nothing, so every result is re-checked against the query tokens and dropped if unrelated. Without this, a nonsense query would silently return thousands of unrelated jobs.
+- **Deduplication.** Same title + company from two boards is kept once.
+
+### Proxies (LinkedIn)
+
+LinkedIn rate-limits most consumer and datacenter IPs (HTTP 429). Supply a proxy:
+
+```bash
+python .agents/skills/jobspy-search/search.py --query "AI Engineer" --location Indonesia \
+  --proxies "http://user:pass@host:port" --sites linkedin
+```
+
+Or set `JOBSPY_PROXIES` once in the environment. Boards other than LinkedIn do not need it.
+
+### Exit Codes
+
+| Code | Meaning | Cache |
+|---|---|---|
+| 0 | saved at least one posting | replaced |
+| 1 | no postings returned | preserved |
+| 2 | `python-jobspy` missing | preserved |
 
 ### Anti Prompt Injection
 
@@ -299,7 +337,11 @@ Both digest tools fail loudly: `job_digest` exits 1 on a missing/corrupt cache, 
 |---|---|---|
 | `python3: command not found` / Windows Store opens | Windows stub alias intercepts | Create a `python3.cmd` shim in `%APPDATA%\npm` pointing at the real `python.exe`; or remove the alias in `%LOCALAPPDATA%\Microsoft\WindowsApps\python3.exe` |
 | `ModuleNotFoundError: jobspy` | Module not installed | `pip install python-jobspy` |
-| `Invalid site_name: 'jobstreet'` (older jobspy) | Library lacks support | Handled automatically - invalid sites are skipped (`[i] Site not supported ... skipped`) |
+| `ModuleNotFoundError: requests` | Direct board scrapers need it | `pip install requests` |
+| `[!] linkedin: 429` | LinkedIn rate-limits the IP | Pass `--proxies` or set `JOBSPY_PROXIES`; other boards still work |
+| `[i] jobindo: no public search API` | Board has no usable endpoint | Expected. Use `--sites jobstreet,kalibrr,indeed,linkedin` |
+| `[i] glints: ... requires a logged-in cookie token` | Board gates its API | Expected. Not scraped |
+| `[!] no postings returned. Keeping existing cache` | Query matched nothing on every board | Widen the query; the previous cache is intact |
 | Chromium launch fail `0xC000007B` / `2147483651` | Downloaded puppeteer Chromium cannot run here | Already automatic: uses `tools/.puppeteer-config.json` + `PUPPETEER_EXECUTABLE_PATH` pointing at installed Chrome/Edge |
 | `npx` not found by Python (WinError 2) | On Windows `subprocess` needs `.cmd`; npx is `npx.cmd` | Handled - scripts use `shutil.which("npx")` |
 | `UnicodeEncodeError: cp1252` when printing web text | Windows console is not UTF-8 by default | Handled in `fetch_page.py`, `posting_guard.py`, `job_digest.py`, `ref_digest.py` - `sys.stdout.reconfigure(encoding="utf-8")` |
@@ -327,6 +369,7 @@ Both digest tools fail loudly: `job_digest` exits 1 on a missing/corrupt cache, 
 - Clear the scrape cache without touching the profile: `/reset` with no arguments.
 - Reset profile + cache: `/reset all`.
 - Target a specific company: add its name to the `/scrape` query, e.g. `/scrape "Backend Tokopedia" "Jakarta"`.
+- Narrow the boards when you only trust one source: `--sites jobstreet,kalibrr` (default `jobstreet,kalibrr,indeed,linkedin`).
 - 15 h/week and 2-3 weeks are the default constraint template; edit `.claude/skills/portfolio-architect/02-constraints-profile.md` any time.
 - Token saving: run `/applyidea <id> --prompts` once, then work the milestones with another agent using `05_agent_prompts.md`. Use `/scaffold` only when you need a starter repo.
 - Blueprints are intentionally conceptual. Need implementation detail? Have another agent execute the prompt pack instead of adding code sections to the blueprint.

@@ -33,7 +33,9 @@ documents/ (CV, LinkedIn, transkrip)
    /scrape "<posisi>" "<lokasi>" --> .agents/skills/jobspy-search/search.py
         |                                   |
         v                                   v
-  job_scraper/latest_scrape.json <---- Indeed / LinkedIn / Glassdoor
+  job_scraper/latest_scrape.json <---- JobStreet / Kalibrr / Indeed / LinkedIn
+        |                              (+ glassdoor, zip_recruiter, bayt, naukri,
+        |                               bdjobs, hellowork, google via --sites)
         |
         v
       /rank ----------------> job_scraper/ranked_jobs.json
@@ -86,9 +88,10 @@ ai-portfolio-architect/
 |   |-- settings.json                  # Whitelist permission Bash
 |   |-- config/lang.md                 # Setelan bahasa output (satu-satunya sumber)
 |   |-- commands/                      # 10 slash command
-|   `-- skills/portfolio-architect/    # 11 modul pengetahuan (SKILL + 00-10)
+|   `-- skills/portfolio-architect/    # 13 modul pengetahuan (SKILL + 00-11)
 |-- .agents/skills/                    # 3 CLI miner (data eksternal)
-|   |-- jobspy-search/search.py        # Scraper lowongan
+|   |-- jobspy-search/search.py        # Scraper lowongan (multi-board)
+|   |-- jobspy-search/boards.py        # Scraper langsung: JobStreet (SEEK), Kalibrr
 |   |-- github-repo-miner/mine_github.py   # Referensi repo GitHub
 |   `-- arxiv-paper-miner/mine_arxiv.py    # Referensi paper ArXiv
 |-- tools/
@@ -128,7 +131,7 @@ ai-portfolio-architect/
 ### 1. Dependensi Python
 
 ```bash
-pip install python-jobspy
+pip install python-jobspy requests
 ```
 
 ### 2. Paket Node global
@@ -161,6 +164,7 @@ python tools/fetch_page.py "https://example.com"
 python .agents/skills/github-repo-miner/mine_github.py --query "python" --limit 2
 python .agents/skills/arxiv-paper-miner/mine_arxiv.py --query "rag" --limit 2
 python .agents/skills/jobspy-search/search.py --query "backend engineer jakarta" --limit 5
+python .agents/skills/jobspy-search/search.py --query "AI Engineer" --location Indonesia --sites jobstreet,kalibrr --limit 5
 ```
 
 ---
@@ -170,7 +174,7 @@ python .agents/skills/jobspy-search/search.py --query "backend engineer jakarta"
 | Perintah | Fungsi |
 |---|---|
 | `/setup` | Onboarding: baca `documents/` atau 5 pertanyaan singkat |
-| `/scrape "<posisi>" "<lokasi>"` | Scraping loker, hitung Portfolio Leverage Score, tabel 10 baris |
+| `/scrape "<posisi>" "<lokasi>"` | Scraping loker lintas board, hitung Portfolio Leverage Score, tabel 10 baris. Set board lewat `--sites`, proxy LinkedIn lewat `--proxies` |
 | `/rank` | Urutkan ulang memakai rubrik `04-gap-evaluation.md` |
 | `/applyidea <URL atau ID> [--prompts] [--no-pdf]` | Alur utama: analisis, riset, 3 opsi, blueprint konseptual, diagram, PDF, tracker |
 | `/prompt <folder>` | Buat atau perbarui `05_agent_prompts.md` untuk agent lain |
@@ -242,18 +246,52 @@ python .agents/skills/jobspy-search/search.py --query "backend engineer jakarta"
 
 | Sumber | Endpoint / Library | Output |
 |---|---|---|
-| Lowongan | `python-jobspy` (indeed, LinkedIn, glassdoor*; jobstreet bila didukung) | `job_scraper/latest_scrape.json` |
+| Lowongan (native) | `python-jobspy` - indeed, linkedin, glassdoor, zip_recruiter, bayt, naukri, bdjobs, hellowork, google | `job_scraper/latest_scrape.json` |
+| Lowongan (API langsung) | JobStreet Indonesia (SEEK v5 JSON), API publik Kalibrr - lihat `boards.py` | `job_scraper/latest_scrape.json` |
 | Repo GitHub | `api.github.com/search/repositories` | `job_scraper/github_refs.json` |
 | Paper ilmiah | `export.arxiv.org/api/query` | `job_scraper/arxiv_refs.json` |
 | Halaman web | Jina Reader `r.jina.ai/<url>` lalu fallback direct GET | stdout |
 
-> \* Glassdoor di-drop otomatis bila lokasi mengandung "indonesia" atau "jakarta".
+Setiap record membawa field `source`, jadi hasil ranking bisa dilacak ke board asalnya.
 
-### Batasan `python-jobspy` 1.4.0
+### Board Lowongan
 
-- `jobstreet` belum didukung PyPI (site valid: linkedin, indeed, zip_recruiter, glassdoor, google, bayt, naukri, bdjobs, hellowork).
-- Script otomatis melaporkan bila versi baru menambah dukungan jobstreet.
-- Scraper JobStreet manual: https://github.com/cullenwatson/jobs-scraper
+Set default: `jobstreet,kalibrr,indeed,linkedin`. Ganti dengan `--sites`.
+
+| Board | Akses | Status |
+|---|---|---|
+| `jobstreet` | API SEEK langsung (`id.jobstreet.com/api/jobsearch/v5`) | jalan, tanpa auth |
+| `kalibrr` | API publik (`kalibrr.com/kjs/job_board/search`) | jalan, tanpa auth |
+| `indeed`, `linkedin`, `glassdoor`, `zip_recruiter`, `bayt`, `naukri`, `bdjobs`, `hellowork` | `python-jobspy` | jalan; LinkedIn bisa balas HTTP 429 di IP rumahan |
+| `google` | `python-jobspy` | saat ini kosong (scraper upstream rusak di 1.4.x) |
+| `jobindo` | tidak ada | dilewati: aplikasi JS di balik anti-bot, tanpa API publik |
+| `glints` | tidak ada | dilewati: API butuh cookie token login |
+
+Poin desain:
+
+- **Isolasi per board.** Tiap board punya try block sendiri, jadi satu 429 atau timeout tidak mematikan seluruh batch. Board yang gagal dilaporkan di akhir.
+- **Batas round-robin.** Hasil diselang-seling antar board sebelum dipotong `--limit * 3`, sehingga board terakhir di daftar tidak pernah terpotong habis.
+- **Gerbang relevansi.** Kalibrr mengembalikan seluruh katalognya saat query tidak cocok, jadi tiap hasil dicek ulang terhadap token query dan dibuang bila tidak relevan. Tanpa ini, query asal-asalan akan diam-diam mengembalikan ribuan lowongan tak terkait.
+- **Deduplikasi.** Judul + perusahaan sama dari dua board disimpan sekali.
+
+### Proxy (LinkedIn)
+
+LinkedIn membatasi sebagian besar IP rumahan dan datacenter (HTTP 429). Pasang proxy:
+
+```bash
+python .agents/skills/jobspy-search/search.py --query "AI Engineer" --location Indonesia \
+  --proxies "http://user:pass@host:port" --sites linkedin
+```
+
+Atau set `JOBSPY_PROXIES` sekali di environment. Board selain LinkedIn tidak memerlukannya.
+
+### Exit Code
+
+| Kode | Arti | Cache |
+|---|---|---|
+| 0 | minimal satu lowongan tersimpan | diganti |
+| 1 | tidak ada lowongan | dipertahankan |
+| 2 | `python-jobspy` tidak terpasang | dipertahankan |
 
 ### Anti Prompt Injection
 
@@ -281,7 +319,11 @@ Kedua digest gagal secara eksplisit: `job_digest` exit 1 bila cache hilang/korup
 |---|---|---|
 | `python3: command not found` | Stub alias Windows | Buat shim `python3.cmd` di `%APPDATA%\npm`, atau hapus alias di `%LOCALAPPDATA%\Microsoft\WindowsApps\python3.exe` |
 | `ModuleNotFoundError: jobspy` | Modul belum terinstal | `pip install python-jobspy` |
-| `Invalid site_name: 'jobstreet'` | Library lama | Ditangani otomatis, site tidak valid dilewati |
+| `ModuleNotFoundError: requests` | Scraper board langsung membutuhkannya | `pip install requests` |
+| `[!] linkedin: 429` | LinkedIn membatasi IP tersebut | Pakai `--proxies` atau set `JOBSPY_PROXIES`; board lain tetap jalan |
+| `[i] jobindo: no public search API` | Board tanpa endpoint publik | Normal. Pakai `--sites jobstreet,kalibrr,indeed,linkedin` |
+| `[i] glints: ... requires a logged-in cookie token` | Board mengunci API-nya | Normal. Tidak di-scrape |
+| `[!] no postings returned. Keeping existing cache` | Query tidak cocok di semua board | Perlebar query; cache sebelumnya tetap utuh |
 | Chromium fail `0xC000007B` | Chromium puppeteer tidak bisa jalan | Otomatis pakai Chrome/Edge via `tools/.puppeteer-config.json` |
 | `npx` tidak terdeteksi (WinError 2) | Windows butuh `npx.cmd` | Ditangani, memakai `shutil.which("npx")` |
 | `UnicodeEncodeError: cp1252` | Console bukan UTF-8 | Ditangani, `sys.stdout.reconfigure(encoding="utf-8")` |
@@ -308,6 +350,7 @@ Kedua digest gagal secara eksplisit: `job_digest` exit 1 bila cache hilang/korup
 - `documents/` kosong, `/setup` menanyakan 5 poin profil.
 - Hapus cache tanpa menghapus profil: `/reset`. Reset profil + cache: `/reset all`.
 - Perusahaan spesifik: `/scrape "Backend Tokopedia" "Jakarta"`.
+- Batasi board bila hanya percaya satu sumber: `--sites jobstreet,kalibrr` (default `jobstreet,kalibrr,indeed,linkedin`).
 - Batas waktu default 15 jam/pekan, 2-3 minggu. Ubah di `02-constraints-profile.md`.
 - Hemat token: jalankan `/applyidea <id> --prompts` sekali, lalu kerjakan milestone dengan agent lain memakai `05_agent_prompts.md`.
 - Blueprint sengaja konseptual. Butuh detail implementasi? Minta agent lain mengeksekusi prompt pack.
