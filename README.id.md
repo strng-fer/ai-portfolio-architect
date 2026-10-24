@@ -85,7 +85,7 @@ ai-portfolio-architect/
 |-- .claude/
 |   |-- settings.json                  # Whitelist permission Bash
 |   |-- config/lang.md                 # Setelan bahasa output (satu-satunya sumber)
-|   |-- commands/                      # 9 slash command
+|   |-- commands/                      # 10 slash command
 |   `-- skills/portfolio-architect/    # 11 modul pengetahuan (SKILL + 00-10)
 |-- .agents/skills/                    # 3 CLI miner (data eksternal)
 |   |-- jobspy-search/search.py        # Scraper lowongan
@@ -95,7 +95,11 @@ ai-portfolio-architect/
 |   |-- fetch_page.py                  # Ambil halaman web (Jina Reader)
 |   |-- posting_guard.py               # Filter prompt injection iklan lowongan
 |   |-- job_digest.py                  # Ringkasan loker hemat token
-|   |-- ref_digest.py                  # Ringkasan repo/paper hemat token
+|   |-- ref_digest.py                  # Ringkasan repo/paper hemat token (urut relevansi)
+|   |-- check_portfolio.py             # Gerbang validasi: budget, bab, metrik terbukti
+|   |-- prompt_contract.py             # Ekstrak kontrak eksekusi (perintah + metrik)
+|   |-- scaffold_repo.py               # Buat starter repo sesuai kontrak itu
+|   |-- portfolio_status.py            # Status semua portfolio dalam satu perintah
 |   |-- compile_diagrams.py            # Render .mmd -> .png
 |   |-- compile_pdf.py                 # Gabung Markdown -> PDF
 |   |-- verify_pdf.py                  # Validasi PDF
@@ -170,7 +174,8 @@ python .agents/skills/jobspy-search/search.py --query "backend engineer jakarta"
 | `/rank` | Urutkan ulang memakai rubrik `04-gap-evaluation.md` |
 | `/applyidea <URL atau ID> [--prompts] [--no-pdf]` | Alur utama: analisis, riset, 3 opsi, blueprint konseptual, diagram, PDF, tracker |
 | `/prompt <folder>` | Buat atau perbarui `05_agent_prompts.md` untuk agent lain |
-| `/scaffold <folder>` | Opsional. Starter repo ringkas |
+| `/scaffold <portfolio_folder>` | Generate `starter_repo/`: failing test per milestone, benchmark script per metric, `Makefile`, `README` dengan tabel metrik, `TODO` |
+| `/status [portfolio_folder]` | Laporkan status tiap portfolio (BLUEPRINT_READY / MARKDOWN_ONLY / INCOMPLETE / UNTRACKED) dan aksi berikutnya |
 | `/lang <en\|id>` | Ganti bahasa output (default English) |
 | `/expand` | Perkaya profil dari dokumen atau repo baru |
 | `/reset` | Bersihkan cache (`all` juga reset profil) |
@@ -294,6 +299,9 @@ Kedua digest gagal secara eksplisit: `job_digest` exit 1 bila cache hilang/korup
 - **Compile PDF:** `tools/compile_pdf.py <folder_portofolio>` menggabungkan `00...05 .md`, menambah lampiran diagram bila blueprint belum menyisipkan gambar, lalu render via `md-to-pdf` (`PUPPETEER_EXECUTABLE_PATH` dideteksi otomatis).
 - **Verify PDF:** `tools/verify_pdf.py <pdf> [--min-pages N]` memeriksa file ada, ukuran >= 5 KB, jumlah halaman, semua dokumen sumber masuk, dan tidak ada gambar yang rusak.
 - **Check portfolio:** `tools/check_portfolio.py <folder> [--strict]` gerbang validasi: budget kata per file, bab wajib, larangan blok kode, baris metrik dengan target angka + instrument + baseline, gate review berbukti, dan perintah "Done when" yang bisa dijalankan. Exit 1 memblokir PDF.
+- **Prompt contract:** `tools/prompt_contract.py <folder>` mengekstrak setiap perintah "Done when" dan setiap instrument metrik agar bisa diubah menjadi file nyata, bukan sekadar prosa.
+- **Scaffold repo:** `tools/scaffold_repo.py <folder> [--dry-run] [--force]` menulis `starter_repo/` dengan satu test gagal per milestone (namanya menyebut requirement-nya), satu skrip benchmark per metrik, dan `Makefile` yang sudah memuat semua target yang dirujuk prompt. Test sengaja gagal sampai milestone dikerjakan.
+- **Portfolio status:** `tools/portfolio_status.py [folder] [--json]` membaca tracker + artefak di disk dan melaporkan BLUEPRINT_READY, MARKDOWN_ONLY, INCOMPLETE, UNTRACKED, STALE_STATUS, atau NEEDS_REVIEW beserta aksi berikutnya.
 
 ## Tips Praktis
 

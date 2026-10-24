@@ -22,6 +22,7 @@ Knowledge base for designing a portfolio project targeted at one real job postin
 **Token economy & execution**
 9. `08-token-discipline.md` - output contract, read limits, word budgets, no-code-detail rule. **Read before running any command.**
 10. `10-agent-prompt-pack.md` - structure of `05_agent_prompts.md` for another agent to execute. Filled example: `templates/agent_prompt_pack.example.md`.
+11. `11-execution-handoff.md` - how a blueprint becomes a working repo: contract extraction, starter repo rules, milestone order, and what "done" means per milestone.
 
 ## Standard read order for `/applyidea`
 `00` -> `08` -> `09` -> `05` -> `06` -> `01` -> `02` -> `03`. That is enough. Module `04` is only for `/scrape` and `/rank`. Module `10` only when `--prompts` is used.

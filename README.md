@@ -86,8 +86,8 @@ ai-portfolio-architect/
 |-- .claude/
 |   |-- settings.json                  # Bash permission whitelist
 |   |-- config/lang.md                 # Output language setting (single source of truth)
-|   |-- commands/                      # 9 slash commands
-|   `-- skills/portfolio-architect/    # 11 knowledge modules (SKILL + 00-10)
+|   |-- commands/                      # 10 slash commands
+|   `-- skills/portfolio-architect/    # 12 knowledge modules (SKILL + 00-11)
 |-- .agents/skills/                    # 3 CLI miners (external data)
 |   |-- jobspy-search/search.py        # Job scraper (indeed/LinkedIn/glassdoor)
 |   |-- github-repo-miner/mine_github.py   # GitHub repo references
@@ -96,10 +96,14 @@ ai-portfolio-architect/
 |   |-- fetch_page.py                  # Fetch a web page (via Jina Reader)
 |   |-- posting_guard.py               # Prompt injection filter for job ads
 |   |-- job_digest.py                  # Token-lean job summary (replaces raw JSON reads)
-|   |-- ref_digest.py                  # Token-lean repo/paper summary
+|   |-- ref_digest.py                  # Token-lean repo/paper summary (ranked by relevance)
+|   |-- check_portfolio.py             # Validation gate: budgets, sections, provable metrics
+|   |-- prompt_contract.py             # Extract the executable contract (commands + metrics)
+|   |-- scaffold_repo.py               # Generate a starter repo matching that contract
+|   |-- portfolio_status.py            # One-command status across all portfolios
 |   |-- compile_diagrams.py            # Render .mmd -> .png (mermaid-cli / Kroki fallback)
 |   |-- compile_pdf.py                 # Merge Markdown + render PDF (md-to-pdf)
-|   |-- verify_pdf.py                  # Validate PDF existence and size
+|   |-- verify_pdf.py                  # Validate PDF pages and document composition
 |   `-- .puppeteer-config.json         # (auto-generated) Chrome/Edge executablePath
 |-- documents/                         # Candidate documents (cv/, linkedin/, transcripts/, past_projects/)
 |-- job_scraper/                       # Scrape cache (latest_scrape.json, ranked_jobs.json, *_refs.json)
@@ -178,7 +182,8 @@ All interaction goes through slash commands in [CC] / OpenCode:
 | `/rank` | Re-rank using the `04-gap-evaluation.md` rubric |
 | `/applyidea <URL or ID> [--prompts] [--no-pdf]` | Main flow: job analysis -> GitHub/ArXiv research -> 3 options -> conceptual blueprint -> diagrams -> PDF -> tracker. `--prompts` also writes the agent prompt pack |
 | `/prompt <portfolio_folder>` | Create or refresh `05_agent_prompts.md`: executable instructions for another agent |
-| `/scaffold <portfolio_folder>` | Optional. Compact starter repo (skeleton, docker, TODO) |
+| `/scaffold <portfolio_folder>` | Generate `starter_repo/`: failing tests per milestone, benchmark scripts per metric, `Makefile`, `README` with metric table, `TODO` |
+| `/status [portfolio_folder]` | Report every portfolio's state (BLUEPRINT_READY / MARKDOWN_ONLY / INCOMPLETE / UNTRACKED) and the next action |
 | `/lang <en\|id>` | Switch output language (default English) |
 | `/expand` | Scan new documents/repos to enrich the candidate profile |
 | `/reset` | Clear the `job_scraper/` cache (`all` also resets the profile) |
@@ -312,6 +317,9 @@ Both digest tools fail loudly: `job_digest` exits 1 on a missing/corrupt cache, 
 - **Compile PDF:** `tools/compile_pdf.py <portfolio_folder>` - merges `00...05 .md` (fails if none exist), appends a visual diagram appendix when the blueprint does not embed images, then renders via `md-to-pdf` (`PUPPETEER_EXECUTABLE_PATH` auto-detected from Chrome/Edge). An old PDF is deleted first so a stale render can never pass.
 - **Verify PDF:** `tools/verify_pdf.py <pdf> [--min-pages N]` - checks the file exists, is >= 5 KB, has the expected page count, contains every source document heading, and has no broken image reference.
 - **Check portfolio:** `tools/check_portfolio.py <folder> [--strict]` - the validation gate. Enforces per-file word budgets, required blueprint sections, no code blocks over 5 lines, metric rows with a numeric target + named instrument + real baseline, evidence-bearing review gate lines, and runnable "Done when" commands. Exit 1 blocks the PDF.
+- **Prompt contract:** `tools/prompt_contract.py <folder> [--json]` - extracts every `Done when` command and every metric instrument so they can be turned into real files instead of staying prose.
+- **Scaffold repo:** `tools/scaffold_repo.py <folder> [--dry-run] [--force]` - writes `starter_repo/` where each milestone has a failing test that names its requirement, each metric has a benchmark script, and the `Makefile` already has every target the prompts reference. Tests fail on purpose until the milestone is implemented.
+- **Portfolio status:** `tools/portfolio_status.py [folder] [--json]` - reads the tracker plus artifacts on disk and reports BLUEPRINT_READY, MARKDOWN_ONLY, INCOMPLETE, UNTRACKED, STALE_STATUS, or NEEDS_REVIEW with the next action. Exit 1 when any selected portfolio is not ready.
 
 ## Practical Tips
 

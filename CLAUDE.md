@@ -22,8 +22,9 @@ Full rules: `.claude/skills/portfolio-architect/08-token-discipline.md`. Summary
 3. `/rank` - re-rank by learning ROI, no narration.
 4. `/applyidea <url|id> [--prompts] [--no-pdf]` - main flow: data -> conceptual draft -> review gate -> diagrams + PDF. `--prompts` also writes `05_agent_prompts.md`.
 5. `/prompt <folder>` - create or refresh the agent prompt pack from an existing blueprint.
-6. `/scaffold <folder>` - optional starter repo. Not part of the main flow.
-7. `/lang`, `/expand`, `/reset` - language switch, profile upkeep, cache cleanup.
+6. `/scaffold <folder>` - generate a starter repo whose tests and benchmarks match the prompt pack.
+7. `/status [folder]` - report the state of every portfolio and the next action.
+8. `/lang`, `/expand`, `/reset` - language switch, profile upkeep, cache cleanup.
 
 ## Golden Rules
 - **No generic CRUD ideas** (to-do apps, e-commerce catalogs, social clones, thin API wrappers). Every idea must attack a specific technical challenge named in the posting's responsibilities.
