@@ -1,0 +1,14 @@
+flowchart TD
+    A["Client (reviewer)"] --> B["Intake API (idempotent)"]
+    B --> C["Preprocessor (deskew, quality score)"]
+    C --> D{"Page quality gate"}
+    D -->|clean| E["Text path (fast OCR)"]
+    D -->|degraded| F["Vision path (YOLO + OCR enhance)"]
+    E --> G["Region index (Qdrant hybrid)"]
+    F --> G
+    G --> H["Extraction agent (bounded tools)"]
+    J["LLM (untrusted)"] --> H
+    H --> I["Verifier (deterministic spans)"]
+    I --> K["Response composer (fields + citations)"]
+    K --> A
+    I -->|reject| H

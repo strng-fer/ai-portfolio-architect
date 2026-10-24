@@ -5,6 +5,9 @@ description: Scrape jobs and score portfolio potential (10-line output, token-le
 Search parameters: `$ARGUMENTS`
 
 1. Run `python3 .agents/skills/jobspy-search/search.py --query "$ARGUMENTS" --location "<location or Indonesia>" --limit 15`.
+   - Boards default to `jobstreet,kalibrr,indeed,linkedin`. Override with `--sites` (also: `google`, `glassdoor`, `zip_recruiter`, `bayt`, `naukri`, `bdjobs`, `hellowork`).
+   - `jobindo` and `glints` have no usable public API; the script reports them as skipped, never faked.
+   - LinkedIn needs a proxy on most networks: `--proxies "http://user:pass@host:port"` or `JOBSPY_PROXIES`.
    - Exit 2 = dependency missing: print one line and stop.
    - Exit 1 = no postings: print one line and stop. The previous cache is preserved; never fabricate a table.
 2. Run `python3 tools/job_digest.py list --top 15`. **Never** read `latest_scrape.json` raw.
