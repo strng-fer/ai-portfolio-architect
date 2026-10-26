@@ -1,0 +1,12 @@
+FAKTUR NO: INV-2026-0512
+Tanggal: 21/05/2026
+Dari: PT Mitra Logistik Nusantara
+
+Item                     Qty     Price        Amount
+Sewa gudang (bulan)       1   3.500.000     3.500.000
+Bongkar muat              2     275.000       550.000
+
+Subtotal                                    4.050.000
+
+Catatan: nomor invoice ini dikirim terpisah oleh bagian keuangan.
+Terima kasih atas kepercayaan Anda.

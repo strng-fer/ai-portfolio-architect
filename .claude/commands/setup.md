@@ -6,13 +6,21 @@ Run `/setup`:
 
 1. Check `documents/cv/`, `documents/linkedin/`, `documents/transcripts/`, `documents/past_projects/`.
    - Files found: read them and extract into the profile. Never quote document contents in chat.
-   - Empty: ask the 5 questions below **in one message**, numbered, max one line each:
+   - Empty: ask the 8 questions below **in one message**, numbered, max one line each:
      1. Background + strongest language/framework?
      2. Target role?
      3. Hours per week for portfolio work?
      4. Machine specs + free-tier only?
      5. Preferred industry domain?
+     6. Who should the finished product serve? (real people, named — not "recruiters")
+     7. How far must each project ship? (`product` = live URL a stranger can use / `demo` = runnable repo / `research` = measurements only)
+     8. What do those users do today instead, and where would you find five of them?
 2. Write `.claude/skills/portfolio-architect/01-candidate-profile.md` and `02-constraints-profile.md` using compact tables/bullets (max 40 lines each). Do not add new sections.
+2b. **Write the product intent profile** `.claude/skills/portfolio-architect/01c-product-intent.md` from answers 6-8.
+   - `Mode` becomes one of `product` / `demo` / `research`. Default to `product` when the answer is unclear.
+   - One ranked audience row per audience, each with a `Domain` tag (`agri`, `docops`, `devtools`) so `product_fit.py` can score affinity. Ask once if a tag is ambiguous.
+   - `Refusals` are quoted from the candidate's own answers. Never invent one.
+   - Validate with `python3 tools/product_fit.py audiences`; it must exit 0.
 3. **Select the role pack** from the target role: `python3 tools/pack_load.py --for-role "<target role>"`.
    - On exit 0, write the pack name into the `Active pack:` line of `.claude/config/pack.md`.
    - On exit 1, list packs with `python3 tools/pack_load.py --list` and ask one question: which pack fits? Then write it.

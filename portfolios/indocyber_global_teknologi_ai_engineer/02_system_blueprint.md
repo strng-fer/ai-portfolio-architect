@@ -1,30 +1,31 @@
-# Budgeted Evidence Agent
+# Invoice Reader with a Call Budget
 
-Job: AI Engineer, PT Indocyber Global Teknologi | Stack: Python, FastAPI, Postgres with pgvector, Docker | Estimate: 34 h | Status: blueprint
+Job: AI Engineer, PT Indocyber Global Teknologi | Stack: Python, FastAPI, Postgres with pgvector, Docker | Estimate: 34 h | Status: blueprint | Mode: product
 
 ## 1. Problem & Relevance
-A client PoC agent that answers document questions is easy to show and hard to price. Loop length is decided by the model, so one ambiguous question can consume twenty tool calls; cost and latency appear only on the invoice. When the agent finds no answer it still writes one, so a grounded answer looks like a guess.
+An SME bookkeeper retyping invoices misses a supplier line and the payment goes wrong. An AI reader is easy to demo and hard to trust: loop length is decided by the model, so one blurry invoice can consume twenty tool calls, and when the reader cannot find a field it still writes one.
 
-The people who lose are the delivery engineer quoting a fixed price and the client accepting it. Both need spend per request and a latency ceiling before signing, plus a defined behaviour for "not in the documents", the case that destroys trust in a pilot.
+The people who lose are the bookkeeper and the owner paying for the mistake. They need three things before they will use it: a result in under a minute, a visible source for every number, and an honest "I cannot read this field" instead of a confident guess.
 
-This is hard because the natural fix, a shorter prompt asking the model to be efficient, is unenforceable. A guarantee needs an external counter, a stop rule that does not trust the model, and a refusal that is a first-class response. The posting asks for exactly this: LLM workflow agents, retrieval, served behind FastAPI for client prototypes.
+This is hard because the natural fix, a prompt asking the model to be careful and brief, is unenforceable. A guarantee needs an external counter, a stop rule that does not trust the model, and a refusal that is a first-class state in the UI. The posting asks for exactly this: LLM workflow agents and retrieval behind FastAPI for client prototypes.
 
 ## 2. Goals & Non-Goals
-- Cap tool calls at 4 per request, enforced outside the model and recorded in the response.
-- Hold p95 latency at or under 6 s on CPU-only inference over 50 forms.
-- Price every request in the ledger, with unattributed spend at 0%.
-- Answer only with spans a deterministic verifier accepts; refuse otherwise.
-- Reach 0.85 exact-match field accuracy on 60 held-out items.
+- Cap tool calls at 4 per invoice, enforced outside the model and recorded in the response.
+- First extracted field visible within 60 s of upload on CPU-only inference.
+- Price every invoice in the ledger, with unattributed spend at 0%.
+- Answer only with spans a deterministic verifier accepts; refuse per field otherwise.
+- Reach 0.85 exact-match field accuracy on 60 held-out invoices.
 
-Non-goals: OCR training, multi-tenant isolation, UI beyond a trace viewer, streaming, fine-tuning.
+Non-goals: OCR training, multi-tenant isolation, accounts or billing, streaming, fine-tuning.
+
 ## 3. Design Alternatives & Decision
 | Approach | Pros | Cons | When it fits |
 |---|---|---|---|
-| Unbounded ReAct loop | Simplest, best raw accuracy | Cost and latency set by the model | Research notebooks |
-| Framework runner with a turn limit | One configuration value; tracing for free | Counts turns, not spend; retries escape it | Teams already on a framework |
-| Explicit budgeted loop with a stop rule | Cap, price, refusal are deterministic and testable | More request-path code; tuning needed | Client PoCs with a quoted price |
+| Unbounded ReAct loop | Simplest, best raw accuracy | Cost set by the model | Research notebooks |
+| Framework runner with a turn limit | Tuning for free | Counts turns, not spend; retries escape it | Teams on a framework |
+| Budgeted loop with a stop rule | Cap, price, refusal all deterministic | More request-path code | Products with a price |
 
-Decision: the explicit loop. The cap must survive retries, parallel tool calls, and model upgrades; only a counter the model cannot reach gives that, because a quoted price needs a worst case.
+Decision: the budgeted loop. The cap must survive retries and model upgrades; only a counter the model cannot reach gives a worst case.
 
 ## 4. Architecture & Flow
 ![](diagrams/system_architecture.png)
@@ -33,79 +34,101 @@ Decision: the explicit loop. The cap must survive retries, parallel tool calls, 
 
 | Component | Responsibility | Constraint |
 |---|---|---|
-| FastAPI edge | Validate request, attach budget, return trace id | Rejects undeclared budgets |
+| FastAPI edge | Validate upload, attach budget, return trace id | Rejects undeclared budgets |
 | Budget ledger | Reserve, decrement, price each call | Authoritative; planner cannot write |
 | Planner (LLM) | Choose next tool, draft answer | Untrusted: proposes only |
-| Tool registry | Three tools: retrieve, read page, compare fields | Fixed set, no dynamic tools |
-| Retrieval | pgvector dense search plus lexical scoring | CPU embeddings, 50 forms |
-| Stop controller | Stop on cap, on sufficiency, or on no gain | Deterministic, no model call |
-| Verifier | Match each value to a span by offset | Deterministic check |
+| Tool registry | Retrieve, read page, compare fields | Fixed set |
+| Retrieval | pgvector plus lexical scoring | CPU embeddings |
+| Stop controller | Stop on cap, sufficiency, or no gain | No model call |
+| Verifier | Match each value to a span by offset | Deterministic |
 | Trace store | One JSONL row per step | Append-only |
 
 ## 5. Tech Stack & Skill Bridge
 | Layer | Technology | Known / New | Reason |
 |---|---|---|---|
 | Language | Python | Known | Existing strength |
-| API | FastAPI | Known, thin | Posting names it; needs a public artifact |
-| Database | PostgreSQL with pgvector | New | Closes Postgres and vector-DB gaps together |
-| Embeddings | Small sentence-transformer, CPU | New | Free tier, no GPU |
-| LLM | Free-tier hosted model, local fallback | New | Quota risk forces a fallback |
-| Packaging | Docker Compose | Thin | Posting lists container deployment |
-| Evaluation | Python harness, fixed splits | New | Closes the evaluation-harness gap |
+| API | FastAPI | Known, thin | Posting names it |
+| Database | PostgreSQL with pgvector | New | Closes two ledger gaps |
+| Embeddings | Small sentence-transformer | New | Free tier |
+| LLM | Free-tier hosted, local fallback | New | Quota risk |
+| Packaging | Docker Compose | Thin | Posting lists it |
+| Evaluation | Python harness, fixed splits | New | Evaluation gap |
 
 ## 6. Key Theory & References
-- **Budgeted agent loop**: each step reserves from a counter before acting, so worst-case cost follows the cap, not model behaviour. Fails when tools spawn sub-calls outside the reservation.
-- **Diminishing-return stop rule**: stop when the last step added no new verified span. Fails when the gain signal is scored by the model that chose the step.
-- **Evidence sufficiency**: an answer is admissible only if every claimed field maps to a verifiable span. Fails when the source splits a value across two regions.
-- **Per-request cost attribution**: price each step from a token ledger at the call site. Fails when a call path bypasses the instrumented client.
+- **Budgeted agent loop**: each step reserves from a counter before acting, so worst-case cost follows the cap. Fails when tools spawn sub-calls outside the reservation.
+- **Diminishing-return stop rule**: stop when the last step added no verified span. Fails when the model scores its own gain.
+- **Evidence sufficiency**: a field is admissible only with a verifiable span. Fails when the source splits a value.
+- **Per-request cost attribution**: price each step at the call site. Fails when a path bypasses the instrumented client.
 
 ## 7. Data & Interfaces (Concept)
-Entities: document, page, chunk, item, run, step, span claim, budget entry.
+Entities: invoice, page, chunk, field, run, step, span claim, budget entry.
 
 | Operation | Input | Output |
 |---|---|---|
-| Ask | Item id, budget | Answer or refusal, spans, trace id |
+| Extract | Uploaded PDF or item id, budget | Fields with spans, or per-field refusal, trace id |
 | Trace lookup | Trace id | Ordered steps with cost |
-| Evaluate | Split name | Accuracy, citation validity, refusal rate |
+| Evaluate | Split name | Accuracy, citation validity, refusal rate, time to first value |
 | Compare | Two run ids | Delta per metric |
 
-Data source: FUNSD, a public set of 199 scanned forms with entity annotations. This project uses the 50-form test split, converted into 60 question items: 44 answerable, 16 unanswerable. Ground truth comes from the published annotations, not hand labelling. Reproduction: `python data/build_eval_set.py` rebuilds split and items from the raw archive with a fixed seed, so the split hash matches anywhere.
+Data source: FUNSD, a public set of 199 scanned forms with entity annotations. This project uses the 50-form test split, converted into 60 invoice-like field-extraction items: 44 answerable, 16 with a field deliberately absent. Ground truth comes from published annotations, not hand labelling. Reproduction: `python data/build_eval_set.py` rebuilds the split and items from the raw archive with a fixed seed, so the split hash matches anywhere.
 
 ## 8. Technical Challenges & Solution Strategy
-- **Termination guarantee**: the ledger reserves before the call and refuses after the cap, so a stuck planner ends in a refusal. Proof: replay 60 items, assert calls per request never exceed 4.
-- **Budget accounting under retries**: reservation is keyed by step id, so a retried call reuses it instead of consuming a second one. Proof: fault-injection run failing 20% of tool calls.
-- **Noisy retrieval on scanned text**: chunking respects layout blocks, and lexical scoring covers numeric fields embeddings blur. Proof: recall@5 against a chunk-by-character baseline.
-- **Refusal calibration**: the sufficiency rule is tuned on a dev split, then frozen before the held-out run, so the 16 unanswerable items test it honestly. Proof: hallucination rate on that subset.
+- **Termination guarantee**: the ledger reserves before the call and refuses after the cap. Proof: replay 60 items, assert calls never exceed 4.
+- Budget accounting under retries: reservation is keyed by step id, so a retry reuses it. Proof: fault injection failing 20% of calls.
+- **Noisy retrieval on scanned text**: chunking respects layout blocks, and lexical scoring covers the numeric fields embeddings blur. Proof: recall@5 against a chunk-by-character baseline.
+- **Refusal calibration**: the sufficiency rule is tuned on a dev split, then frozen before the held-out run, so the 16 absent-field items test it honestly. Proof: per-field refusal accuracy on that subset.
 - **Attribution leakage**: one client wrapper is the only path to the model; a test asserts no direct call sites exist. Proof: unattributed share is 0%.
 
 ## 9. Metrics & Validation
 | Metric | Target | Instrument | Baseline |
 |---|---|---|---|
-| Tool calls per request | <= 4 calls/req at p100 | `python benchmarks/loop_trace.py` | Unbounded ReAct loop, mean 11.4 calls/req on the same 60 items |
-| p95 latency | <= 6 s | `python benchmarks/latency.py` | Unbounded loop, p95 21 s |
-| Cost per request | <= $0.0009/req | `python benchmarks/cost.py` | Unbounded loop, $0.0031/req |
+| Tool calls per invoice | <= 4 calls/req at p100 | `python benchmarks/loop_trace.py` | Unbounded ReAct loop, mean 11.4 calls/req on the same 60 items |
+| Time to first value | <= 45 s median | `python tools/usage_report.py portfolios/<slug>` | Manual retyping, 4 min per invoice |
+| Task completion rate | >= 70% of sessions | `python tools/usage_report.py portfolios/<slug>` | Spreadsheet workflow, no completion signal |
+| External users | >= 5 completing users | `python tools/usage_report.py portfolios/<slug>` | Prototype shared with 0 users outside the author |
+| Cost per invoice | <= $0.0009/req | `python benchmarks/cost.py` | Unbounded loop, $0.0031/req |
 | Field accuracy | >= 0.85 exact match | `python eval/run_eval.py` | Single-shot extraction, 0.62 |
 | Citation validity | >= 0.97 of claims verified | `python eval/verify_spans.py` | Unverified generation, 0.00 |
-| Hallucination rate | <= 0.05 on unanswerable items | `python eval/run_eval.py --subset unanswerable` | Single-shot extraction, 0.41 |
+
+Time to first value and task completion share one instrument (`usage_report.py`) because both are read from the app's own usage log; that log doubles as the adoption evidence in section 14.
 
 ## 10. Workflow
 | Phase | Input | Output | Done | Hours |
 |---|---|---|---|---|
-| 1. Corpus and eval set | FUNSD archive | 50 forms, 60 items, split hash | Split rebuilds identical | 6 |
-| 2. Ledger and loop | Phase 1 items | Budgeted loop, trace store | Cap holds under fault injection | 10 |
-| 3. Stop rule and verifier | Phase 2 loop | Refusal path, span verifier | Unanswerable item refuses with trace | 8 |
-| 4. Benchmarks | Phase 3 service | Six metric artifacts | All six instruments run twice | 6 |
-| 5. Packaging and docs | Phase 4 artifacts | Compose file, README, viewer | Cold clone reproduces the table | 4 |
+| 1. Corpus and eval set | FUNSD archive | 50 forms, 60 items | Split rebuilds identical | 5 |
+| 2. Ledger and loop | Phase 1 items | Budgeted loop, trace store | Cap holds | 8 |
+| 3. Stop rule and verifier | Phase 2 loop | Refusal path, span verifier | Absent field refuses | 6 |
+| 4. Benchmarks | Phase 3 service | Seven artifacts | Instruments run twice | 4 |
+| 5. UI | Phase 4 service | Upload page, field table | Headless check passes | 5 |
+| 6. Deploy | Phase 5 image | Public URL, quota fallback | `deploy_check.py` exits 0 | 3 |
+| 7. Field use | Phase 6 URL | 5 users, usage log | `usage_report.py` exits 0 | 3 |
 
-Demo path, the failure case the mechanism exists for: `curl -s -X POST localhost:8000/ask -H 'content-type: application/json' -d '{"item_id":"funsd_test_07","question":"total amount"}'` returns a refusal with the budget trace showing no admissible span.
+Demo path, the failure case the mechanism exists for: open the deployed URL, upload `samples/invoice_missing_total.pdf`, and the field table shows `total: not found in this document` with the budget trace beside it, instead of a fabricated number.
 
 ## 11. Risks & Mitigation
-- Free-tier LLM quota: cached planner decisions plus local fallback; benchmarks run in offline replay.
-- Time: 34 h against a 40 h ceiling; only phase 3 may absorb slippage.
-- Corpus and index limits: 50 forms is small, so every metric reports item count and a bootstrap interval; index the test split only.
+- Free-tier LLM quota: cached planner decisions plus local fallback.
+- The Space sleeps when idle: the landing page carries a recorded walkthrough; the URL is best-effort.
+- 50 forms is small: every metric reports item count and a bootstrap interval.
 - Stop-rule overfitting: dev split tunes, held-out split reports.
 
 ## 12. CV Bullet Draft
-- Cut agent tool calls from a mean of 11.4 to a hard cap of 4 per request on 60 document QA items, making worst-case cost a function of the cap, not the model.
-- Held p95 latency at 6 s and $0.0009 per request on CPU inference with a Postgres budget ledger that survives retries and fault injection.
-- Reached 97% verifiable answers and 5% hallucination on unanswerable questions by making "insufficient evidence" a first-class response.
+- Cut invoice-reader tool calls from a mean of 11.4 to a hard cap of 4 per invoice on 60 field-extraction items, making worst-case cost a function of the cap, not the model.
+- Shipped a live invoice reader used by 5 SME bookkeepers, holding median time to first extracted field at 45 s and cost at $0.0009 per invoice on CPU inference.
+- Reached 97% verifiable fields and 5% fabricated-value rate by making "field not found" a first-class UI state with a deterministic span verifier.
+
+## 13. Product Surface & UX
+One job: turn a scanned invoice into fields a bookkeeper can trust and export. First value under 60 seconds: upload, a progress line, then the field table with each value linked to its source box.
+
+| Stage | What the user sees |
+|---|---|
+| Empty | Drop zone, two samples, one line on what happens to the file |
+| Running | Current agent step and the call count out of 4 |
+| Success | Field table, clickable spans, inline edit, CSV export |
+| Failure | "Not found in this document", with a reason and a retake hint |
+| Error | Plain message plus trace id, never a stack trace |
+
+The screen that matters is the field table beside the page image. Absent: accounts, settings, history, batch upload, model choice.
+## 14. Go-Live Plan
+Deploy status: pending. The product runs locally today: `cd product && PORT=7860 python app.py`. A Dockerfile and `space_config.yml` are ready for Hugging Face Spaces (Docker SDK, free, 2 vCPU, 512 MB image, sleeps after 15 min idle, no persistent disk). The URL appears here at P7 after the upload returns it.
+
+Fallback when sleep blocks the demo: cached-result mode serving the samples from disk, so the failure state stays reachable. Usage is recorded by the app into `product/usage.json` and reported by `python tools/usage_report.py portfolios/<slug>`. Target: 5 external users, 20 completed sessions.

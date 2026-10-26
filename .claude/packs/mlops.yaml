@@ -26,3 +26,10 @@ default_mechanisms:
   - reproducible-split
   - cascade-routing
 demo_rule: The demo must trigger a real drift or regression and show the gate blocking the release.
+product_shape: A user connects a model endpoint and gets an alert only when it truly degraded, with the rollback button next to it.
+product_metric_families:
+  - time to first value
+  - task completion rate
+  - external users
+  - retention
+

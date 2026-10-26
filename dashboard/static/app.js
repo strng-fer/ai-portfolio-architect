@@ -158,6 +158,20 @@ function renderPortfolios() {
       if (p.metrics) gates.push(`<span class="tag">${p.metrics} metrics</span>`);
       if (p.prompts) gates.push(`<span class="tag sub">prompt pack</span>`);
 
+      let product = "";
+      if (p.product && p.product.mode) {
+        product = p.product.ok
+          ? `<div class="product-band ok">
+               <span class="tag ok">product ready</span>
+               <span class="mono">${esc(p.product.audience || "audience unset")}</span>
+               ${p.product.url ? `<span class="mono muted">${esc(p.product.url)}</span>` : ""}
+             </div>`
+          : `<div class="product-band warn">
+               <span class="tag warn">product gate</span>
+               <span class="muted">${esc(p.product.errors.slice(0, 3).join(" · "))}</span>
+             </div>`;
+      }
+
       return `<article class="portfolio">
         <div class="portfolio-head">
           <div class="portfolio-title">
@@ -173,6 +187,7 @@ function renderPortfolios() {
           <span><span class="k">tracker</span> <span class="mono">${esc(p.tracker)}</span></span>
           <span><span class="k">updated</span> <span class="mono">${ago(p.updated)}</span></span>
         </div>
+        ${product}
         <div class="doc-bars">${docs || `<div class="empty">No documents.</div>`}</div>
         <div class="portfolio-gates">${gates.join("")}</div>
       </article>`;

@@ -21,20 +21,21 @@ Full rules: `.claude/skills/portfolio-architect/08-token-discipline.md`. Summary
 - Per-file word budgets live in `08-token-discipline.md`. Those are hard limits.
 
 ## Commands
-1. `/setup` - fill `01-candidate-profile.md`, `02-constraints-profile.md`, and `01b-skill-evidence.md` from `documents/` or 5 short questions. Also selects the role pack.
+1. `/setup` - fill `01-candidate-profile.md`, `02-constraints-profile.md`, `01b-skill-evidence.md`, and `01c-product-intent.md` from `documents/` or 8 short questions. Also selects the role pack.
 2. `/scrape "<role>" "<location>"` - scrape jobs, compute Portfolio Leverage score, print a 10-row table.
 3. `/rank` - re-rank by learning ROI, no narration.
-4. `/applyidea <url|id> [--prompts] [--no-pdf]` - main flow: data -> conceptual draft -> review gate -> diagrams + PDF. `--prompts` also writes `05_agent_prompts.md`.
+4. `/applyidea <url|id> [--prompts] [--no-pdf]` - main flow: data -> conceptual draft -> product fit -> review gate -> diagrams + PDF. `--prompts` also writes `05_agent_prompts.md`.
 5. `/prompt <folder>` - create or refresh the agent prompt pack from an existing blueprint.
 6. `/scaffold <folder>` - generate a starter repo whose tests and benchmarks match the prompt pack.
 7. `/status [folder]` - report the state of every portfolio and the next action.
 8. `/lang`, `/expand`, `/reset` - language switch, profile upkeep, cache cleanup.
 
-## Personalisation (three inputs)
+## Personalisation (four inputs)
 Ideas are only personal when these differ. Never skip them.
 - **Evidence** - `01b-skill-evidence.md` + `tools/skill_evidence.py gap --needs "..."`. Score gaps from artifacts, not claims. More than 2 `missing` skills means the posting is out of reach: lower the score.
 - **Mechanism** - `12-mechanism-catalogue.md` + `tools/mechanism_pick.py --signals "..." --hours N`. The 3 ranked mechanisms become the 3 ideation options. Record the chosen one in `portfolios/_history.json` so the next project favours novelty.
-- **Pack** - `Active pack:` in `.claude/config/pack.md` + `tools/pack_load.py`. Supplies legitimate metric families, banned idea shapes, default mechanisms, and whether ArXiv applies. `forbidden_ideas` is binding.
+- **Pack** - `Active pack:` in `.claude/config/pack.md` + `tools/pack_load.py`. Supplies legitimate metric families, banned idea shapes, default mechanisms, product shape, and whether ArXiv applies. `forbidden_ideas` is binding.
+- **Product intent** - `01c-product-intent.md` + `tools/product_fit.py pick --mechanisms "..."`. Names the audience, the shipping bar, and the refusals. A mechanism scoring below 60 is dropped from ideation, because an idea nobody can use is not a portfolio project. Default mode is `product`: the blueprint must end at a live URL a stranger can use. See `PRODUCT_MODE.md`.
 
 ## Golden Rules
 - **No generic CRUD ideas** (to-do apps, e-commerce catalogs, social clones, thin API wrappers). Every idea must attack a specific technical challenge named in the posting's responsibilities, and must name a mechanism ID from the catalogue.

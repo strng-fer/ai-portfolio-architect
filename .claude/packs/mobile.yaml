@@ -25,3 +25,10 @@ default_mechanisms:
   - partial-failure
   - edge-quantization
 demo_rule: The demo must run a real device or emulator profile and report the measured envelope.
+product_shape: A user does the task offline, on a cheap Android phone, and their edits survive a reconnect conflict.
+product_metric_families:
+  - time to first value
+  - task completion rate
+  - external users
+  - retention
+

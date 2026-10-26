@@ -54,6 +54,9 @@ job_scraper/*
 # Mirror produced by setup_cli_links.sh (regeneratable from .claude/commands)
 .opencode/
 
+# Usage log written by a deployed product at runtime (local sessions, not source)
+portfolios/**/product/usage.json
+
 # Generated blueprint artifacts (keep the .md sources, drop regenerated output)
 portfolios/**/Blueprint_Final.pdf
 portfolios/**/Blueprint_Final.md
@@ -81,6 +84,11 @@ Desktop.ini
 
 # Local agent harness scratch (playwright snapshots)
 .playwright-mcp/
+
+# Dashboard captures beyond the one the README embeds
+dashboard/preview_product.png
+dashboard/preview_session.png
+dashboard/invoice_*.png
 
 # One-off build spec, superseded by CLAUDE.md + skills
 PLAN.md

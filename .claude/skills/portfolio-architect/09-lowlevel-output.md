@@ -10,10 +10,12 @@ Depth rule and word budgets come from `08-token-discipline.md`: concept only, no
 4. `## Business Problems Worth Attacking` - one paragraph + bullets listing specific technical problems.
 
 ## `01_project_ideation.md` - max 550 words
-Table of 3 options: Option | Idea (one sentence) | Problem absorbed | New technology | Est. hours | Risk.
+Table of 3 options: Option | Idea (one sentence) | User (who + what they do today) | Problem absorbed | New technology | Est. hours | Risk.
 - Option 1 = recommended, Option 2 = infra/scalability focus, Option 3 = AI/data/feature focus.
+- Every row names one audience from `01c-product-intent.md`. "Recruiters" and "everyone" are rejected.
 - `## Choice` - one paragraph: why Option 1 wins against the candidate's time limits and gaps.
 - `## Deliberately Excluded` - 3 bullets of features not being built.
+- In product mode add one line under the table: what the shipped URL does in one sentence, and what the user sees when the mechanism fails.
 
 ## `03_references_study.md` - max 400 words
 Repo table: Name | Why relevant | Part to study (one line). Max 3.
@@ -30,8 +32,9 @@ Quality gate - one line per criterion, and **each line must carry evidence**, no
 - Realistic in time: yes - 24h total vs 32h ceiling in `02-constraints-profile.md`.
 - Metrics provable: yes - 2 metrics, both with an instrument and a baseline in section 9.
 - Diagrams rendered: yes - `diagrams/system_architecture.png` 51 KB, `user_workflow.png` 57 KB.
-- Word budgets: yes - 00=420, 01=530, 02=1480, 03=390, 04=340, 05=880.
+- Word budgets: yes - 00=420, 01=530, 02=1480, 03=390, 04=340, 05=880. (Product mode: `02` may reach 1750.)
 - `check_portfolio.py`: pass - 0 errors, 1 warning (appendix image).
+- `product_fit.py`: pass - 96/100, audience and URL both named (product mode only).
 ```
 
 `## Verdict` - one line (PASS / PATCH) + max 3 bullets of changes applied.

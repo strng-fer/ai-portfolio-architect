@@ -13,5 +13,6 @@ Use these weights (100 points total) when scoring jobs in `/scrape` and `/rank`:
 3. **Reusability & Market Demand (30 points)**:
    - High score when the resulting stack and architecture also apply to many similar companies.
    - Prefer mechanisms that appear across domains over mechanisms tied to one employer's internal tool.
+   - In product mode, subtract up to 10 points when no mechanism the posting suggests can serve an audience in `01c-product-intent.md`. A job that leads to a project nobody can use is a weaker investment, however good the CV line.
 
 Report the score plus a <=12-word idea per job. The idea must name a mechanism, not a feature. No narrative.

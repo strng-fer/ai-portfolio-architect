@@ -14,9 +14,27 @@ How to use (3 lines) + execution order.
 ## P3 - <Milestone 3>
 ## P4 - <Milestone 4>
 ## P5 - Review & Benchmark
+## P6 - UI (product mode only)
+## P7 - Deploy (product mode only)
+## P8 - Field use (product mode only)
 ```
 
-Milestone count follows the blueprint workflow. Max 6 prompts total.
+Milestone count follows the blueprint workflow. Max 6 prompts, or max 9 in product mode.
+
+## Product mode: the last three prompts
+
+When `01c-product-intent.md` says `Mode` is `product`, the pack continues past P5. These prompts are not optional and must not be merged into P5:
+
+| Prompt | Goal | Done when (runnable) |
+|---|---|---|
+| P6 | One page, one primary action, empty and error states visible | a headless check hits the primary action and asserts the failure state renders |
+| P7 | Public deploy on free tier with the quota fallback wired | `python tools/deploy_check.py <url>` exits 0 |
+| P8 | Five external users reached, usage log captured, one insight written | `python tools/usage_report.py portfolios/<slug>` exits 0 |
+
+P8 is the one prompt whose "Done when" depends on people rather than code. It must also state: if fewer than five users are reached, report the real number and do not edit the log.
+
+## Rule: the demo path is a URL in product mode
+P0 carries the deployed URL once P7 lands. Before that it carries the local run command and the sentence "the URL replaces this line at P7". Never let the demo section of the README describe a command only.
 
 ## Format of each prompt (required, fixed order)
 

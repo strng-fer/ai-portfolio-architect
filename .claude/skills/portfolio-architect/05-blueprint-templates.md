@@ -17,6 +17,10 @@ Level: **low-level concept**. The reader must understand the problem, the design
 11. `## 10. Workflow` - table Phase | Input | Output | Done, plus hour estimate per phase.
 12. `## 11. Risks & Mitigation` - 3-5 lines (free-tier quota, time, data, external dependencies).
 13. `## 12. CV Bullet Draft` - 3 XYZ bullets (see `07-cv-bullet-generator.md`).
+14. `## 13. Product Surface & UX` - **product mode only** (`13-product-mode.md`): the one job the user hires it for, the 5-step first-run path, empty state, error state, the single screen that matters, what is absent from the UI. Max 150 words.
+15. `## 14. Go-Live Plan` - **product mode only**: host, free-tier limits, deploy command, quota fallback, seed data on first load, how usage is recorded. Max 150 words.
+
+In product mode the word budget for `02` is **1750**, not 1500. Run `python3 tools/product_fit.py check portfolios/<slug>` after `check_portfolio.py`.
 
 ## Rule: every metric must be provable
 A metric row is only valid when all four cells are real:

@@ -29,6 +29,25 @@ BUDGETS = {
     "05_agent_prompts.md": 900,
 }
 
+# Product mode adds two sections to the blueprint, so it gets the headroom.
+PRODUCT_BUDGET_OVERRIDES = {"02_system_blueprint.md": 1750}
+IPAD = Path(".claude/skills/portfolio-architect/01c-product-intent.md")
+
+
+def product_mode():
+    try:
+        text = IPAD.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return bool(re.search(r"\|\s*Mode\s*\|\s*`product`", text))
+
+
+def budgets():
+    table = dict(BUDGETS)
+    if product_mode():
+        table.update(PRODUCT_BUDGET_OVERRIDES)
+    return table
+
 REQUIRED_SECTIONS = [
     "Problem & Relevance",
     "Goals & Non-Goals",
@@ -90,7 +109,8 @@ def main():
         sys.exit(1)
 
     # 1. required files
-    for name in BUDGETS:
+    limits = budgets()
+    for name, limit in limits.items():
         path = folder / name
         if not path.exists():
             if name == "05_agent_prompts.md":
@@ -104,8 +124,8 @@ def main():
             continue
         # 2. word budget
         count = words(text)
-        if count > BUDGETS[name]:
-            errors.append(f"{name}: {count} words exceeds budget {BUDGETS[name]}")
+        if count > limit:
+            errors.append(f"{name}: {count} words exceeds budget {limit}")
         # 3. no long code blocks
         fence_count = len(CODE_FENCE.findall(text))
         if fence_count:

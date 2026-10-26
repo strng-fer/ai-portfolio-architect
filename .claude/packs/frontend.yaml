@@ -25,3 +25,10 @@ default_mechanisms:
   - partial-failure
   - cost-attribution
 demo_rule: The demo must include a Lighthouse or axe run with before/after numbers.
+product_shape: A user completes one real task on a slow 3G phone and the UI never lies about its state.
+product_metric_families:
+  - time to first value
+  - task completion rate
+  - external users
+  - retention
+

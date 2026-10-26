@@ -31,3 +31,9 @@ default_mechanisms:
   - partial-failure
   - schema-drift
 demo_rule: The demo must include a fault-injection or load run whose numbers are in the README.
+product_shape: A user submits a real form twice, or under a slow network, and gets exactly one correct outcome with a visible receipt.
+product_metric_families:
+  - time to first value
+  - task completion rate
+  - external users
+  - retention

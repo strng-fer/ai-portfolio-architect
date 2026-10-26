@@ -30,3 +30,9 @@ default_mechanisms:
   - prompt-injection-guard
   - cost-attribution
 demo_rule: The demo must show the failure mode, not the happy path. Show a rejected ungrounded answer.
+product_shape: A user pastes or uploads their own document and gets an answer with clickable source spans, or a refusal that tells them what to add.
+product_metric_families:
+  - time to first value
+  - task completion rate
+  - external users
+  - retention

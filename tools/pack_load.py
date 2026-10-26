@@ -38,7 +38,11 @@ REQUIRED_KEYS = (
     "arxiv",
     "default_mechanisms",
     "demo_rule",
+    "product_shape",
+    "product_metric_families",
 )
+
+PRODUCT_KEYS = ("product_shape", "product_metric_families")
 
 
 def load_yaml(path: Path) -> dict:
@@ -62,7 +66,7 @@ def validate(pack: dict, path: Path) -> list[str]:
             errors.append(f"{path.name}: missing key '{key}'")
     if pack.get("name") and pack["name"] != path.stem:
         errors.append(f"{path.name}: name '{pack['name']}' does not match file name")
-    for key in ("target_roles", "metric_families", "forbidden_ideas", "default_mechanisms"):
+    for key in ("target_roles", "metric_families", "forbidden_ideas", "default_mechanisms", "product_metric_families"):
         value = pack.get(key)
         if value is not None and not isinstance(value, list):
             errors.append(f"{path.name}: '{key}' must be a list")
@@ -111,6 +115,8 @@ def print_pack(pack: dict) -> None:
     print(f"default_mechanisms: {', '.join(pack['default_mechanisms'])}")
     print(f"forbidden_ideas: {', '.join(pack['forbidden_ideas'])}")
     print(f"demo_rule: {pack['demo_rule']}")
+    print(f"product_shape: {pack['product_shape']}")
+    print(f"product_metric_families: {', '.join(pack['product_metric_families'])}")
 
 
 def main() -> int:

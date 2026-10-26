@@ -27,3 +27,9 @@ default_mechanisms:
   - cascade-routing
   - calibration
 demo_rule: The demo must run on the target hardware or an explicit stand-in, and report the measured envelope.
+product_shape: A user uploads a photo from their phone and gets a labelled result with a confidence and a next action, or an explicit "cannot tell, retake or ask a human".
+product_metric_families:
+  - time to first value
+  - task completion rate
+  - external users
+  - retention

@@ -40,6 +40,15 @@ BUDGETS = {
     "05_agent_prompts.md": 900,
 }
 
+PRODUCT_BUDGETS = {**BUDGETS, "02_system_blueprint.md": 1750}
+
+
+def budgets():
+    """Product mode gives the blueprint 250 extra words for sections 13-14."""
+    return PRODUCT_BUDGETS if product_mode() else BUDGETS
+
+PRODUCT_BUDGET_OVERRIDES = {"02_system_blueprint.md": 1750}
+
 MIME = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
@@ -339,10 +348,87 @@ def tracker_rows():
         return []
 
 
+def product_intent_path():
+    return PROJECT / ".claude" / "skills" / "portfolio-architect" / "01c-product-intent.md"
+
+
+def product_mode():
+    try:
+        text = product_intent_path().read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return bool(re.search(r"\|\s*Mode\s*\|\s*`product`", text))
+
+
+def product_gate(folder: Path):
+    """Mirror tools/product_fit.py check, without shelling out."""
+    if not product_mode():
+        return {"mode": False, "errors": [], "ok": True, "url": "", "audience": ""}
+
+    blueprint = folder / "02_system_blueprint.md"
+    text = blueprint.read_text(encoding="utf-8") if blueprint.is_file() else ""
+    errors = []
+
+    for section in ("Product Surface", "Go-Live Plan"):
+        if section.lower() not in text.lower():
+            errors.append(f"missing section: {section}")
+    url_match = ""
+    found = re.search(r"https?://[a-z0-9][a-z0-9.-]*\.[a-z]{2,}(?:/[^\s`|)]*)?", text)
+    if found:
+        candidate = found.group(0)
+        if re.search(r"YOUR[-_]?(USER|NAME|APP|DOMAIN|SUBDOMAIN)|<[a-z-]+>|example\.(com|org)|TODO", candidate, re.I):
+            errors.append("product URL is still a placeholder")
+        else:
+            url_match = candidate
+    if not found:
+        errors.append("no product URL")
+    if not re.search(r"first value|60\s*s|60 seconds", text, re.I):
+        errors.append("no first-value path")
+    if not re.search(r"fallback|quota|free tier", text, re.I):
+        errors.append("no free-tier fallback")
+    if not re.search(r"\b(\d+)\s+(external )?users?\b", text, re.I):
+        errors.append("no external-user target")
+
+    block = re.search(r"##\s*9\.\s*Metrics.*?(?=\n## |\Z)", text, re.S)
+    if block and not any(
+        k in block.group(0).lower() for k in ("time to first value", "completion rate", "external users", "retention")
+    ):
+        errors.append("no product metric")
+
+    audience = ""
+    ideation = folder / "01_project_ideation.md"
+    if ideation.is_file():
+        body = ideation.read_text(encoding="utf-8")
+        header_cells = []
+        for line in body.splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("|"):
+                continue
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
+            if not header_cells:
+                header_cells = cells
+                continue
+            if all(set(c) <= set("-: ") for c in cells):
+                continue
+            if "user" in [h.lower() for h in header_cells]:
+                idx = [h.lower() for h in header_cells].index("user")
+                if idx < len(cells) and len(cells[idx]) > 3:
+                    audience = cells[idx][:60]
+                    break
+
+    return {
+        "mode": True,
+        "ok": not errors,
+        "errors": errors,
+        "url": url_match,
+        "audience": audience,
+    }
+
+
 def portfolio_state(folder: Path, history, tracker):
     docs = {}
     over = []
-    for name, budget in BUDGETS.items():
+    for name, budget in budgets().items():
         path = folder / name
         if path.is_file():
             count = word_count(path)
@@ -393,6 +479,7 @@ def portfolio_state(folder: Path, history, tracker):
         "tracker": (tracked or {}).get("status") or "-",
         "tracker_date": (tracked or {}).get("date") or "",
         "tracker_title": (tracked or {}).get("project_title") or "",
+        "product": product_gate(folder),
     }
 
 
@@ -419,6 +506,7 @@ def build_workflow():
 
     ready = [p for p in portfolios if p["status"] == "READY"]
     gated = [p for p in portfolios if p["status"] in ("READY", "MARKDOWN") and not p["missing"] and not p["over_budget"]]
+    product_ok = [p for p in portfolios if p["product"]["ok"]]
 
     stages = [
         {
@@ -438,6 +526,14 @@ def build_workflow():
             "label": "Validation gate",
             "state": "done" if gated else ("warn" if portfolios else "pending"),
             "detail": f"{len(gated)}/{len(portfolios)} pass budgets" if portfolios else "not run",
+        },
+        {
+            "id": "product",
+            "label": "Product gate",
+            "state": "done" if product_ok else ("warn" if portfolios else "pending"),
+            "detail": (
+                f"{len(product_ok)}/{len(portfolios)} ship-ready" if portfolios else "not run"
+            ),
         },
         {
             "id": "render",
@@ -460,6 +556,7 @@ def build_workflow():
         "counts": {
             "portfolios": len(portfolios),
             "ready": len(ready),
+            "product_ready": len(product_ok),
             "tracker": len(tracker),
             "jobs": jobs,
         },

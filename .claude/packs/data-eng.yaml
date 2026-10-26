@@ -26,3 +26,9 @@ default_mechanisms:
   - reproducible-split
   - audit-trail
 demo_rule: The demo must show a re-run producing no duplicates, and a schema change being caught.
+product_shape: A user drops their own file and gets a clean, queryable result, with a visible warning for rows the pipeline rejected.
+product_metric_families:
+  - time to first value
+  - task completion rate
+  - external users
+  - retention

@@ -1,0 +1,15 @@
+INVOICE NO: INV-2026-0417
+Date: 17/04/2026
+From: CV Sinar Jaya Abadi
+Address: Jl. Kebon Jeruk 21, Jakarta
+
+Item                     Qty     Price        Amount
+Kertas A4 80gsm          12      52.000       624.000
+Toner cartridge           4     385.000     1.540.000
+Jasa pengiriman           1      45.000        45.000
+
+Subtotal                                    2.209.000
+PPN 11%                                       242.990
+GRAND TOTAL                                 2.451.990
+
+Payment due within 14 days. Thank you.

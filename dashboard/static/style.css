@@ -275,10 +275,13 @@ tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+  .pipeline { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px) {
   .pipeline { grid-template-columns: 1fr; }
 }
 
@@ -350,3 +353,17 @@ tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px;
 .portfolio-gates { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
 .tag.ok { border-color: var(--ok); color: var(--ok); }
 .tag.warn { border-color: var(--accent-2); color: var(--accent-2); }
+
+.product-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  margin-bottom: 10px;
+  font-size: 11.5px;
+}
+.product-band.ok { border-color: rgba(61, 220, 151, .35); background: rgba(61, 220, 151, .06); }
+.product-band.warn { border-color: rgba(245, 165, 36, .35); background: rgba(245, 165, 36, .06); }

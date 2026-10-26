@@ -27,8 +27,8 @@ Word ceilings per file. Hard limits, not suggestions.
 | File | Max words | Contents |
 |---|---|---|
 | `00_job_analysis.md` | 450 | posting requirements, gap, one business-problem paragraph |
-| `01_project_ideation.md` | 550 | 3 compact options + choice + non-goals |
-| `02_system_blueprint.md` | 1500 | concept architecture, data, metrics, workflow |
+| `01_project_ideation.md` | 550 | 3 compact options with named audiences + choice + non-goals |
+| `02_system_blueprint.md` | 1500 (1750 in product mode) | concept architecture, data, metrics, workflow, product surface, go-live |
 | `03_references_study.md` | 400 | 3 repos + 2 papers, 1-2 lines each |
 | `04_review_report.md` | 350 | max 12 findings, table format |
 | `05_agent_prompts.md` | 900 | 1 context prompt + 1 per milestone + 1 review prompt, each with a runnable "Done when" |
@@ -67,6 +67,7 @@ The reviewer may only change sections that failed the quality gate. Never rewrit
 ## 6. Tool execution
 - One call per step, once per phase. Do not re-run a tool just to display its output again.
 - Always run `python3 tools/check_portfolio.py <folder>` before rendering. It enforces budgets, required sections, and provable metrics. Exit code 1 blocks the PDF.
+- In product mode also run `python3 tools/product_fit.py check <folder>`. It blocks a blueprint with no URL, no first-value path, no user target, or no free-tier fallback.
 - Never open or read a finished PDF or PNG. Trust `verify_pdf.py`.
 - Quote at most the last 5 lines of an error log.
 

@@ -26,3 +26,10 @@ default_mechanisms:
   - drift-detection
   - active-learning
 demo_rule: The demo must show the model making a decision at a chosen threshold, with the cost of that threshold.
+product_shape: A user enters their own case and gets a decision with the reasoning threshold shown, plus what to do at the boundary.
+product_metric_families:
+  - time to first value
+  - task completion rate
+  - external users
+  - retention
+
