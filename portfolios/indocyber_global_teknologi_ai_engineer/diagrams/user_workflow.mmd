@@ -1,18 +1,22 @@
 sequenceDiagram
-    participant R as Reviewer
-    participant A as API
-    participant P as Preprocessor
-    participant G as Agent
-    participant V as Verifier
+    participant Client
+    participant API
+    participant Ledger
+    participant Planner
+    participant Tools
+    participant Verifier
 
-    R->>A: Submit scanned invoice
-    A->>P: Analyze pages
-    P-->>A: Regions, geometry, quality score
-    A->>G: Extract six fields
-    G->>G: Retrieve evidence regions
-    G-->>V: Propose values with spans
-    V-->>G: Accept or reject each value
-    G-->>A: Verified fields and flags
-    A-->>R: Fields, citations, confidence
-    R->>A: Explain field 4
-    A-->>R: Region crop and matched span
+    Client->>API: ask question with budget
+    API->>Ledger: reserve step budget
+    Ledger-->>API: remaining calls
+    loop while calls remain and gain above threshold
+        API->>Planner: propose next step
+        Planner-->>API: tool and arguments
+        API->>Ledger: charge step
+        API->>Tools: execute tool
+        Tools-->>API: page spans
+    end
+    API->>Verifier: check claimed values
+    Verifier-->>API: verified spans or none
+    API-->>Client: answer with spans or refusal
+    API-->>Client: trace id and cost

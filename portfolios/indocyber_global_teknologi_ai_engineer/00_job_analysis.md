@@ -1,41 +1,37 @@
-# Job Analysis - PT Indocyber Global Teknologi / AI Engineer
+# Job Analysis - PT Indocyber Global Teknologi, AI Engineer
 
 ## Posting Summary
-- **Company**: PT Indocyber Global Teknologi, Jakarta. IT system integrator serving enterprise and government clients.
-- **Role**: AI Engineer, 1-2 years experience, S1/D4.
-- **Business context**: The team runs R&D for internal products and custom client proof-of-concepts. Delivery pressure comes from short PoC cycles, not from long product roadmaps.
+- Company: PT Indocyber Global Teknologi, Jakarta IT services and product house.
+- Role: AI Engineer, 1-2 years, S1/D4.
+- Context: R&D team for internal products plus client proof-of-concept work, spanning LLM agents, computer vision, and retrieval behind FastAPI.
 
 ## Core Requirements
-| Requirement (from posting) | Weight | Project implication |
+| Requirement | Weight | Project implication |
 |---|---|---|
-| LLM text processing, reasoning, workflow agent | high | Agent calls tools, not just answers |
-| Computer Vision: detection, OCR enhancement | high | Vision stage is first-class |
-| Retrieval with Qdrant or Elasticsearch | high | Hybrid retrieval, measurable recall |
-| FastAPI backend for model integration | high | Serving layer is a deliverable |
-| Python, modular and readable | high | One service, clean seams |
-| Docker and container deployment | medium | Reproducible demo |
-| Vector database familiarity | medium | Qdrant as primary store |
-| Prompt engineering, agentic AI, orchestration | medium | Bounded agent loop with verification |
-| API design across microservices | medium | Clear request/response contract |
+| LLM workflow agents (reasoning, text processing) | high | The agent loop is the core mechanism |
+| Retrieval and indexing (Qdrant, Elasticsearch, other vector DB) | high | pgvector stands in for Qdrant |
+| FastAPI backend for model integration | high | One HTTP agent endpoint |
+| Custom client PoC delivery | high | Demoable in one command |
+| Python, modular and readable | high | Reuse existing strength |
+| Database knowledge | medium | New axis: schema, index, ledger |
+| Docker deployment | medium | Compose reproducibility |
+| Technical documentation | medium | Trace format doubles as docs |
 
 ## Candidate Gap
 | Area | Status | How this project closes it |
 |---|---|---|
-| Python, PyTorch, YOLO | solid | Used as the vision stage, no relearning |
-| FastAPI serving | solid | Extended with async fan-out and streaming |
-| LLM application engineering | thin | Bounded agent loop with tool calls and citations |
-| Vector retrieval at scale | missing | Qdrant hybrid index with recall benchmarks |
-| OCR-to-LLM handoff | thin | Span-anchored extraction contract |
-| Evaluation discipline | missing | Field accuracy, citation validity, hallucination rate |
-| Containerized delivery | thin | Docker Compose demo path |
+| LLM application engineering | thin (row "LLM application engineering", level learning) | Real agent loop with budget accounting |
+| Agent orchestration (LangGraph) | missing (absent from ledger) | Explicit loop state machine, no framework lock-in |
+| Qdrant / vector DB | missing (row "Qdrant / vector DB", level none) | pgvector retrieval with measured recall |
+| PostgreSQL | missing (absent from ledger) | Ledger, traces, index in one schema |
+| OCR pipelines | missing (row "OCR pipelines", level none) | Excluded: corpus ships pre-extracted text |
+| Docker | thin (row "Docker", level learning) | Compose file with API and Postgres |
+| Evaluation harness design | missing (row, level none) | 60-item held-out set, fixed split |
+
+Gap verdict: the detected stack (`python,fastapi,flask,postgresql,docker`) scores 2 missing, exactly at the ceiling. Adding the nice-to-have stack (qdrant, elasticsearch, ocr, langgraph) scores 5 missing and out of reach, so those stay out of scope.
 
 ## Business Problems Worth Attacking
-Enterprise document intake is the recurring PoC request for an integrator: a client hands over scanned invoices and asks for structured data. The demo is easy; the handover is not. The model produces a plausible number that no one can trace to the page, so the client's finance team cannot audit it.
-
-The hard parts are specific:
-
-- **Grounding**: every value points to a page region, verifiable at a glance.
-- **OCR degradation**: skew, stamps, and handwriting break token confidence; low-quality regions must be detected and routed.
-- **Retrieval over layout**: field evidence is spatial, so text-only embeddings miss table structure.
-- **Cost**: a full vision pass per page is expensive; a cascade decides when to escalate.
-- **Evaluation**: accuracy hides hallucination, so citation validity is measured separately.
+Client PoCs die between the demo and the quotation. An agent that answers well on ten hand-picked documents still gives no cost per request, no latency bound, and no stopping rule. On a real corpus it either loops until the token budget dies or answers without evidence. The buyer asks "how much per request, how fast", then "what happens when it does not know".
+- No termination guarantee: loop length is chosen by the model.
+- No cost attribution: spend is reported per application, not per request.
+- No refusal path: unanswerable questions still produce confident text.

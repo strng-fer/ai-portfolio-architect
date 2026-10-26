@@ -79,5 +79,8 @@ Desktop.ini
 *.tmp
 *.bak
 
+# Local agent harness scratch (playwright snapshots)
+.playwright-mcp/
+
 # One-off build spec, superseded by CLAUDE.md + skills
 PLAN.md

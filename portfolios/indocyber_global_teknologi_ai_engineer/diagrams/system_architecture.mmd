@@ -1,14 +1,15 @@
-flowchart TD
-    A["Client (reviewer)"] --> B["Intake API (idempotent)"]
-    B --> C["Preprocessor (deskew, quality score)"]
-    C --> D{"Page quality gate"}
-    D -->|clean| E["Text path (fast OCR)"]
-    D -->|degraded| F["Vision path (YOLO + OCR enhance)"]
-    E --> G["Region index (Qdrant hybrid)"]
-    F --> G
-    G --> H["Extraction agent (bounded tools)"]
-    J["LLM (untrusted)"] --> H
-    H --> I["Verifier (deterministic spans)"]
-    I --> K["Response composer (fields + citations)"]
-    K --> A
-    I -->|reject| H
+flowchart LR
+    C["Client (reviewer)"] --> A["FastAPI edge (budget check)"]
+    A --> L["Budget ledger (Postgres)"]
+    A --> P["Planner (LLM, untrusted)"]
+    P --> S["Stop controller (cap or no gain)"]
+    S -->|continue| T["Tool registry (3 tools)"]
+    T --> R["Retrieval (pgvector + lexical)"]
+    R --> O["Page text (pre-extracted)"]
+    T --> L
+    S -->|stop| V["Verifier (deterministic spans)"]
+    V -->|verified| C
+    V -->|no span| X["Refusal (insufficient evidence)"]
+    X --> C
+    L --> E["Trace store (JSONL)"]
+    V --> E

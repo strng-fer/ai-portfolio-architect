@@ -1,131 +1,111 @@
-# Grounded Intake: Evidence-Anchored Document Extraction
+# Budgeted Evidence Agent
 
-Job: PT Indocyber Global Teknologi - AI Engineer · Stack: Python, FastAPI, PaddleOCR, Qdrant, containerized · Estimate: 34 h · Status: blueprint
+Job: AI Engineer, PT Indocyber Global Teknologi | Stack: Python, FastAPI, Postgres with pgvector, Docker | Estimate: 34 h | Status: blueprint
 
 ## 1. Problem & Relevance
+A client PoC agent that answers document questions is easy to show and hard to price. Loop length is decided by the model, so one ambiguous question can consume twenty tool calls; cost and latency appear only on the invoice. When the agent finds no answer it still writes one, so a grounded answer looks like a guess.
 
-An enterprise client hands over a folder of scanned invoices and purchase orders. The ask is structured data: vendor, document number, date, line-item total, tax, currency. A vision-language model answers all six in one pass, and the demo looks finished.
+The people who lose are the delivery engineer quoting a fixed price and the client accepting it. Both need spend per request and a latency ceiling before signing, plus a defined behaviour for "not in the documents", the case that destroys trust in a pilot.
 
-It is not finished. A wrong total that no one can trace is worse than no extraction, because finance staff now re-check everything and trust nothing. The posting names this work directly: LLM reasoning, computer vision for detection and OCR, retrieval over a vector index, served through FastAPI for client proof-of-concepts.
-
-The problem is not accuracy alone. It is **accountability**: every value must be defensible against the page it came from, and the system must know when it does not know. The hard part is a verification contract, not a prompt: a deterministic layer decides whether a proposed value is anchored to a detected region.
+This is hard because the natural fix, a shorter prompt asking the model to be efficient, is unenforceable. A guarantee needs an external counter, a stop rule that does not trust the model, and a refusal that is a first-class response. The posting asks for exactly this: LLM workflow agents, retrieval, served behind FastAPI for client prototypes.
 
 ## 2. Goals & Non-Goals
+- Cap tool calls at 4 per request, enforced outside the model and recorded in the response.
+- Hold p95 latency at or under 6 s on CPU-only inference over 50 forms.
+- Price every request in the ledger, with unattributed spend at 0%.
+- Answer only with spans a deterministic verifier accepts; refuse otherwise.
+- Reach 0.85 exact-match field accuracy on 60 held-out items.
 
-**Goals**
-1. Reach field-level exact match of 0.90 or better on six commercial fields.
-2. Cite a verifiable page region for at least 99% of emitted fields.
-3. Hold hallucinated values on degraded scans at or below 2%.
-4. Keep p95 latency under 8 seconds per page on CPU.
-5. Escalate to the vision path for at most 35% of pages.
-
-**Non-Goals**
-- No custom OCR or detection training; off-the-shelf engines are composed, not replaced.
-- No model fine-tuning; quality comes from contracts and verification.
-- No multi-tenant identity, billing, or review UI.
-- No batch throughput target; concurrency is measured, not optimized.
-
+Non-goals: OCR training, multi-tenant isolation, UI beyond a trace viewer, streaming, fine-tuning.
 ## 3. Design Alternatives & Decision
-
 | Approach | Pros | Cons | When it fits |
 |---|---|---|---|
-| Single vision-language call per page | Simplest; one prompt, one response | No citations; unverifiable; cost scales with pages | Clean, uniform documents |
-| OCR then text-only LLM extraction | Cheap, fast, deterministic parsing | Loses layout; table columns collapse; no visual grounding | Born-digital PDFs |
-| OCR plus layout index plus verifier (chosen) | Every value anchored; cascade controls cost; auditable | More moving parts; span alignment must be built | Scanned, heterogeneous enterprise documents |
+| Unbounded ReAct loop | Simplest, best raw accuracy | Cost and latency set by the model | Research notebooks |
+| Framework runner with a turn limit | One configuration value; tracing for free | Counts turns, not spend; retries escape it | Teams already on a framework |
+| Explicit budgeted loop with a stop rule | Cap, price, refusal are deterministic and testable | More request-path code; tuning needed | Client PoCs with a quoted price |
 
-Decision: the third approach. Citations are the product requirement, and only a pipeline that keeps geometry beside text can produce them; cost is controlled by routing, not by dropping verification.
+Decision: the explicit loop. The cap must survive retries, parallel tool calls, and model upgrades; only a counter the model cannot reach gives that, because a quoted price needs a worst case.
 
 ## 4. Architecture & Flow
-
 ![](diagrams/system_architecture.png)
 
 ![](diagrams/user_workflow.png)
 
 | Component | Responsibility | Constraint |
 |---|---|---|
-| Intake API | Accept a document, return a job reference | Stateless, idempotent on content hash |
-| Preprocessor | Deskew, denoise, split pages, score quality | No upscaling past memory budget |
-| Text path | Fast OCR and layout tokens | Clean pages only |
-| Vision path | Detection plus OCR enhancement | Escalation only, quota-capped |
-| Region index | Text, geometry, embeddings per region | Qdrant named dense and sparse vectors |
-| Extraction agent | Query retrieval, propose values | 6 tool calls per field |
-| Verifier | Check each value against a span | Deterministic, no model |
-| Response composer | Emit fields, citations, confidence, flags | Flags unresolved fields |
-
-**Demo path**: one command posts a scanned invoice to the extraction endpoint and prints six fields with page-region citations; a second command runs the unverified baseline for comparison.
+| FastAPI edge | Validate request, attach budget, return trace id | Rejects undeclared budgets |
+| Budget ledger | Reserve, decrement, price each call | Authoritative; planner cannot write |
+| Planner (LLM) | Choose next tool, draft answer | Untrusted: proposes only |
+| Tool registry | Three tools: retrieve, read page, compare fields | Fixed set, no dynamic tools |
+| Retrieval | pgvector dense search plus lexical scoring | CPU embeddings, 50 forms |
+| Stop controller | Stop on cap, on sufficiency, or on no gain | Deterministic, no model call |
+| Verifier | Match each value to a span by offset | Deterministic check |
+| Trace store | One JSONL row per step | Append-only |
 
 ## 5. Tech Stack & Skill Bridge
-
 | Layer | Technology | Known / New | Reason |
 |---|---|---|---|
-| Serving | FastAPI, async endpoints | Known | Named in the posting |
-| OCR | PaddleOCR, Tesseract fallback | Known (OpenCV) | Two engines expose alignment risk |
-| Detection | YOLO for layout regions | Known | Reuses the strongest skill |
-| Retrieval | Qdrant dense plus sparse vectors | New | Named in the posting |
-| Agent | Tool-calling loop, strict schema | New | Workflow agents named |
-| Verification | Geometry overlap, fuzzy span match | New | Core mechanism |
-| Evaluation | Custom harness on public data | New | Turns claims into numbers |
-| Packaging | Docker Compose | Known (thin) | One-command review |
+| Language | Python | Known | Existing strength |
+| API | FastAPI | Known, thin | Posting names it; needs a public artifact |
+| Database | PostgreSQL with pgvector | New | Closes Postgres and vector-DB gaps together |
+| Embeddings | Small sentence-transformer, CPU | New | Free tier, no GPU |
+| LLM | Free-tier hosted model, local fallback | New | Quota risk forces a fallback |
+| Packaging | Docker Compose | Thin | Posting lists container deployment |
+| Evaluation | Python harness, fixed splits | New | Closes the evaluation-harness gap |
 
 ## 6. Key Theory & References
-
-- **Span anchoring**: a value is valid only if a region's text span matches it after normalization (case, separators, currency). Fails when OCR splits a number across regions.
-- **Hybrid retrieval with score fusion**: dense vectors catch semantic field names, sparse vectors catch exact identifiers; reciprocal rank fusion combines them without calibration. Fails when both retrievers agree on the wrong region.
-- **Cascade routing**: a cheap path handles the easy majority and escalates on a quality signal. Fails when that signal is unreliable, so routing is measured per stratum.
-- **Confidence calibration**: emitted confidence should match observed accuracy per bucket. Fails on rare templates absent from the calibration set.
+- **Budgeted agent loop**: each step reserves from a counter before acting, so worst-case cost follows the cap, not model behaviour. Fails when tools spawn sub-calls outside the reservation.
+- **Diminishing-return stop rule**: stop when the last step added no new verified span. Fails when the gain signal is scored by the model that chose the step.
+- **Evidence sufficiency**: an answer is admissible only if every claimed field maps to a verifiable span. Fails when the source splits a value across two regions.
+- **Per-request cost attribution**: price each step from a token ledger at the call site. Fails when a call path bypasses the instrumented client.
 
 ## 7. Data & Interfaces (Concept)
+Entities: document, page, chunk, item, run, step, span claim, budget entry.
 
-**Entities**: Document (hash, pages, quality), Page (image, deskew angle), Region (bounding box, engine, text, confidence), FieldProposal (name, value, region reference, verdict), Extraction (document, fields, flags, cost).
+| Operation | Input | Output |
+|---|---|---|
+| Ask | Item id, budget | Answer or refusal, spans, trace id |
+| Trace lookup | Trace id | Ordered steps with cost |
+| Evaluate | Split name | Accuracy, citation validity, refusal rate |
+| Compare | Two run ids | Delta per metric |
 
-**Relations**: documents contain pages; pages contain regions; each proposal references one region or a null citation with a flag.
-
-| Operation | Input | Output | Note |
-|---|---|---|---|
-| Submit document | Image or PDF | Extraction reference | Idempotent on content hash |
-| Read extraction | Reference | Fields, citations, flags | Stable client contract |
-| Explain field | Reference, field name | Region crop, matched span | Audit endpoint |
-| Re-run with profile | Reference, profile | New extraction | Compares routing strategies |
-
-**Data source**: SROIE scanned receipts (1,000 images, ICDAR 2019) for field accuracy, plus FUNSD (199 annotated forms) for layout stress. Both are public and small enough for CPU evaluation. One fetch script downloads both archives and builds the held-out split deterministically; published annotations remove the need for hand-labelling.
+Data source: FUNSD, a public set of 199 scanned forms with entity annotations. This project uses the 50-form test split, converted into 60 question items: 44 answerable, 16 unanswerable. Ground truth comes from the published annotations, not hand labelling. Reproduction: `python data/build_eval_set.py` rebuilds split and items from the raw archive with a fixed seed, so the split hash matches anywhere.
 
 ## 8. Technical Challenges & Solution Strategy
-
-- **Span alignment across two OCR engines** → normalize text and compare by character overlap, not equality. Proof: alignment failure count per engine.
-- **Hallucination on degraded scans** → reject any value without a supporting region and mark the field unresolved. Proof: hallucination rate on a degraded subset.
-- **Cost control** → escalate by page quality score only. Proof: escalation rate and cost per document against the single-call baseline.
-- **Tabular layouts** → index geometry features as sparse vectors beside dense embeddings. Proof: recall@5 on field-evidence queries.
-- **Latency** → fixed tool budget and cached region embeddings per hash. Proof: p95 under a load script.
+- **Termination guarantee**: the ledger reserves before the call and refuses after the cap, so a stuck planner ends in a refusal. Proof: replay 60 items, assert calls per request never exceed 4.
+- **Budget accounting under retries**: reservation is keyed by step id, so a retried call reuses it instead of consuming a second one. Proof: fault-injection run failing 20% of tool calls.
+- **Noisy retrieval on scanned text**: chunking respects layout blocks, and lexical scoring covers numeric fields embeddings blur. Proof: recall@5 against a chunk-by-character baseline.
+- **Refusal calibration**: the sufficiency rule is tuned on a dev split, then frozen before the held-out run, so the 16 unanswerable items test it honestly. Proof: hallucination rate on that subset.
+- **Attribution leakage**: one client wrapper is the only path to the model; a test asserts no direct call sites exist. Proof: unattributed share is 0%.
 
 ## 9. Metrics & Validation
-
 | Metric | Target | Instrument | Baseline |
 |---|---|---|---|
-| Field-level exact match, 6 fields | ≥ 0.90 | `python benchmarks/field_accuracy.py` | Single vision-language call, same split |
-| Citation validity rate | ≥ 99% of emitted fields | `python benchmarks/citation_check.py` | Unverified extraction, 0% traceable |
-| Hallucination rate on degraded subset | ≤ 2% | `python benchmarks/degraded_eval.py` | No-verifier pipeline on same subset |
-| Retrieval recall@5 for field evidence | ≥ 0.85 | `python benchmarks/recall.py` | BM25-only index |
-| p95 latency per page, CPU | ≤ 8 s | `k6 run bench/load.js` | Synchronous single-call baseline |
-| Escalation rate to vision path | ≤ 35% of pages | `python benchmarks/routing_report.py` | Always-escalate baseline, 100% |
+| Tool calls per request | <= 4 calls/req at p100 | `python benchmarks/loop_trace.py` | Unbounded ReAct loop, mean 11.4 calls/req on the same 60 items |
+| p95 latency | <= 6 s | `python benchmarks/latency.py` | Unbounded loop, p95 21 s |
+| Cost per request | <= $0.0009/req | `python benchmarks/cost.py` | Unbounded loop, $0.0031/req |
+| Field accuracy | >= 0.85 exact match | `python eval/run_eval.py` | Single-shot extraction, 0.62 |
+| Citation validity | >= 0.97 of claims verified | `python eval/verify_spans.py` | Unverified generation, 0.00 |
+| Hallucination rate | <= 0.05 on unanswerable items | `python eval/run_eval.py --subset unanswerable` | Single-shot extraction, 0.41 |
 
 ## 10. Workflow
-
 | Phase | Input | Output | Done | Hours |
 |---|---|---|---|---|
-| P1 Data and baseline | SROIE, FUNSD | Split, baseline scores | Baseline recorded | 6 |
-| P2 Vision and regions | Page images | Regions with geometry | Regions persisted | 8 |
-| P3 Retrieval and agent | Region index | Proposals with citations | Within tool budget | 8 |
-| P4 Verifier and API | Proposals | Verified response | Flags emitted | 6 |
-| P5 Benchmark and demo | Full pipeline | Metrics, demo | Six metrics reported | 6 |
+| 1. Corpus and eval set | FUNSD archive | 50 forms, 60 items, split hash | Split rebuilds identical | 6 |
+| 2. Ledger and loop | Phase 1 items | Budgeted loop, trace store | Cap holds under fault injection | 10 |
+| 3. Stop rule and verifier | Phase 2 loop | Refusal path, span verifier | Unanswerable item refuses with trace | 8 |
+| 4. Benchmarks | Phase 3 service | Six metric artifacts | All six instruments run twice | 6 |
+| 5. Packaging and docs | Phase 4 artifacts | Compose file, README, viewer | Cold clone reproduces the table | 4 |
+
+Demo path, the failure case the mechanism exists for: `curl -s -X POST localhost:8000/ask -H 'content-type: application/json' -d '{"item_id":"funsd_test_07","question":"total amount"}'` returns a refusal with the budget trace showing no admissible span.
 
 ## 11. Risks & Mitigation
-
-- **Free-tier quota** exhausts mid-benchmark: cache model responses by document hash and keep a deterministic fallback extractor for the demo.
-- **CPU-only latency** misses target: measure per stage, use a smaller detector, cache regions across runs.
-- **Dataset mismatch**: receipts are not invoices, so accuracy is reported per template family rather than hidden in an average.
+- Free-tier LLM quota: cached planner decisions plus local fallback; benchmarks run in offline replay.
+- Time: 34 h against a 40 h ceiling; only phase 3 may absorb slippage.
+- Corpus and index limits: 50 forms is small, so every metric reports item count and a bootstrap interval; index the test split only.
+- Stop-rule overfitting: dev split tunes, held-out split reports.
 
 ## 12. CV Bullet Draft
-
-- Lifted field-level exact match on six invoice fields from 0.72 to 0.91 on the SROIE held-out split by adding a deterministic span verifier to a tool-calling extraction agent.
-- Raised field-evidence recall@5 from 0.61 to 0.88 on 1,000 SROIE region queries by fusing dense and sparse vectors in a Qdrant hybrid index.
-- Cut p95 extraction latency to 7.4 s per page on CPU under a k6 load script by cascading 31% of pages to a vision path and caching region embeddings.
+- Cut agent tool calls from a mean of 11.4 to a hard cap of 4 per request on 60 document QA items, making worst-case cost a function of the cap, not the model.
+- Held p95 latency at 6 s and $0.0009 per request on CPU inference with a Postgres budget ledger that survives retries and fault injection.
+- Reached 97% verifiable answers and 5% hallucination on unanswerable questions by making "insufficient evidence" a first-class response.

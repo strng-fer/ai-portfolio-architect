@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blueprint Workflow Monitor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%234cc2ff'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="dot" id="live-dot"></span>
+    <h1>Blueprint Workflow Monitor</h1>
+    <span class="muted" id="scope-label">loading…</span>
+  </div>
+  <div class="controls">
+    <span class="muted" id="updated">–</span>
+    <label class="switch">
+      <input type="checkbox" id="auto" checked />
+      <span>live 5s</span>
+    </label>
+    <button id="refresh" class="btn">Refresh</button>
+  </div>
+</header>
+
+<main>
+  <section class="card pipeline-card">
+    <div class="card-head">
+      <h2>Workflow pipeline</h2>
+      <span class="muted" id="pipeline-summary"></span>
+    </div>
+    <ol class="pipeline" id="pipeline"></ol>
+  </section>
+
+  <section class="stats" id="stats"></section>
+
+  <section class="grid">
+    <article class="card">
+      <div class="card-head"><h2>Portfolios</h2><span class="muted" id="portfolio-count"></span></div>
+      <div id="portfolios" class="portfolios"></div>
+    </article>
+
+    <article class="card live-card">
+      <div class="card-head"><h2>Active session</h2><span class="muted" id="live-state">idle</span></div>
+      <div id="live-meta" class="live-meta"></div>
+      <div id="live-steps" class="steps"></div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card chart-card">
+      <div class="card-head">
+        <h2>Agent activity, last 14 days</h2>
+        <div class="segmented" id="metric-switch" role="tablist">
+          <button data-metric="tokens" class="active" role="tab">Fresh tokens</button>
+          <button data-metric="cache_read" role="tab">Cache read</button>
+          <button data-metric="tools" role="tab">Tool calls</button>
+        </div>
+      </div>
+      <div id="chart" class="chart"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><h2>Tools</h2><span class="muted" id="tool-total"></span></div>
+      <div id="tools" class="bars"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Sessions in this project</h2><span class="muted" id="session-count"></span></div>
+    <div class="table-wrap">
+      <table id="sessions">
+        <thead>
+          <tr>
+            <th data-sort="title">Session</th>
+            <th data-sort="agent">Agent</th>
+            <th data-sort="model">Model</th>
+            <th data-sort="tool_calls" class="num">Tools</th>
+            <th data-sort="fresh" class="num">Tokens</th>
+            <th data-sort="cache" class="num">Cache</th>
+            <th data-sort="updated" class="num">Last active</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="drawer-head">
+      <h2 id="drawer-title">Session</h2>
+      <button class="btn ghost" id="drawer-close" aria-label="Close">Close</button>
+    </div>
+    <div id="drawer-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

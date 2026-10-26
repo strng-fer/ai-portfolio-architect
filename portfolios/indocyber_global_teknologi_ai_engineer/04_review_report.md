@@ -2,28 +2,20 @@
 
 | # | Area | Problem | Severity | Fix |
 |---|---|---|---|---|
-| 1 | Budget | `00_job_analysis.md` started at 479 words, over the 450 ceiling | medium | Trimmed requirement table and problem bullets to 441 |
-| 2 | Budget | `02_system_blueprint.md` started at 1751 words, over the 1500 ceiling | high | Cut duplicated theory and risk prose to 1491 |
-| 3 | Metrics | Six rows required a buildable baseline for each | medium | Baseline column names the naive single-call or BM25-only reference |
-| 4 | Data | Dataset must be obtainable and reproducible | low | Section 7 names SROIE and FUNSD with size and one-script reproduction |
-| 5 | Depth | Verification detail risked drifting into implementation | low | Section 8 states mechanism and proof only, no symbols |
-| 6 | Diagrams | PNG files absent until render step | low | Mermaid sources exist; render is the next phase |
-| 7 | Prompts | Each milestone needed a runnable check | medium | Six prompts, each with a `make` or `python` command |
+| 1 | Scope | Nice-to-have stack (Qdrant, Elasticsearch, OCR, LangGraph) scores 5 missing skills, out of reach | high | Scoped to the detected stack; those four named as non-goals in `01_project_ideation.md` |
+| 2 | Evidence | Qdrant row in the ledger is `none`, so the vector-DB claim needs an artifact | high | pgvector retrieval carries the vector work and reports recall@5 against a chunk-by-character baseline |
+| 3 | Metrics | `bounded-agent-loop` natively reports calls/request and p99 latency, which the pack does not list | medium | Reported as p95 latency and cost per request from the pack's families; calls/request kept as the p100 cap row |
+| 4 | Data | 50 forms is a small corpus for a cost claim | medium | Section 11 reports item count and a bootstrap interval per metric |
+| 5 | Demo | Happy-path demo would hide the mechanism | medium | Section 10 demo hits an unanswerable item and shows the refusal plus budget trace |
+| 6 | References | arXiv export returned HTTP 429 on four attempts | low | Papers resolved via the HF papers index with real arXiv ids; noted in `03_references_study.md` |
 
-Quality gate:
-
-- Anti-CRUD: yes - `02_system_blueprint.md` section 8 is built around span verification, not a list view.
-- Realistic in time: yes - 34 h total vs 60 h ceiling in `02-constraints-profile.md`.
+## Quality Gate
+- Anti-CRUD: yes - `02_system_blueprint.md` section 8 is built around the termination guarantee, not a list view.
+- Realistic in time: yes - 34 h in section 10 against the 40 h ceiling in `02-constraints-profile.md`.
 - Metrics provable: yes - 6 metrics, each with instrument and baseline in section 9.
-- Non-goals: yes - 4 explicit exclusions in `02_system_blueprint.md` section 2.
-- Diagrams: yes - `diagrams/system_architecture.mmd` 12 nodes, `user_workflow.mmd` 5 actors, both under the limits in `06-diagram-rules.md`.
-- Word budgets: yes - 00=441, 01=384, 02=1490, 03=258, 04=341, 05=675.
-- `check_portfolio.py`: pass - 0 error(s), 0 warning(s) in portfolios\indocyber_global_teknologi_ai_engineer.
+- Diagrams rendered: yes - `diagrams/system_architecture.png` and `diagrams/user_workflow.png`, 11 nodes and 6 participants.
+- Word budgets: yes - 00=446, 01=417, 02=1498, 03=277, 04=~300.
+- `check_portfolio.py`: pass - `[=] 0 error(s), 1 warning(s) in portfolios\indocyber_global_teknologi_ai_engineer`
 
 ## Verdict
-
-PASS - no blocking findings after two repair rounds.
-
-- Trimmed two documents to budget without dropping required sections.
-- Kept every metric row with a concrete target, named instrument, and buildable baseline.
-- Deferred PNG rendering to phase 4, which clears both remaining warnings.
+PASS. Changes applied: rewrote the folder for the `bounded-agent-loop` mechanism, trimmed 00 and 02 into budget over five passes, replaced the stale prompt pack and PDF from the previous blueprint.
